@@ -26,6 +26,13 @@ val std_deck : unit -> t
 (** [length deck] is the number of cards in [deck]. *)
 val length : t -> int
 
+(** [suit card] is the suit of [card]. *)
+val suit : card -> suit
+
+(** [rank card] is the rank of [card]. 
+    Raises: InvalidRank if rank of [card] is not in [[2..14]]. *)
+val rank : card -> rank
+
 (** [cmp_suit c1 c2] is a positive integer if the suit of [c1] is greater than
     [c2], a negative integer if the suit of [c2] is greater than [c1], or zero 
     if the suits of [c1] and [c2] are equal. 

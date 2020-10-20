@@ -21,6 +21,12 @@ let suit_to_int suit =
   | C -> 1
   | D -> 0
 
+let suit ((s, r) : card) = 
+  s
+
+let rank ((s, r) : card) = 
+  r
+
 let cmp_suit ((s1, r1) : card) ((s2, r2) : card) : int = 
   compare (s1 |> suit_to_int) (s2 |> suit_to_int) 
 
