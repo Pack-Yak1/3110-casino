@@ -23,6 +23,9 @@ val make_deck : card list -> t
 (** [std_deck ()] is a standard deck of 52 cards. *)
 val std_deck : unit -> t
 
+(** [length deck] is the number of cards in [deck]. *)
+val length : t -> int
+
 (** [cmp_suit c1 c2] is a positive integer if the suit of [c1] is greater than
     [c2], a negative integer if the suit of [c2] is greater than [c1], or zero 
     if the suits of [c1] and [c2] are equal. 
@@ -41,9 +44,17 @@ val cmp_rank : card -> card -> int
     Requires: [c1] and [c2] are valid cards. *)
 val cmp_card : card -> card -> int
 
+(** [deck_eq d1 d2] is true if [d1] and [d2] contain the same cards. 
+    Otherwise it is false.  *)
+val deck_eq : t -> t -> bool
+
 (** [sort deck] is [deck] sorted in ascending order by rank, then by suit in
     the case of a rank tie. *)
 val sort : t -> t
+
+(** [pick deck n] is the 0-index n-th card option of [deck]. Returns None if
+    [n] is greater than or equal to the number of cards in [deck]. *)
+val pick : t -> int -> card option
 
 (** [bj_score deck] is the integer score of [deck] in a traditional game of 
     blackjack. *)

@@ -32,6 +32,12 @@ let cmp_card (c1 : card) (c2 : card) : int =
   | 0 -> cmp_suit c1 c2
   | x -> x
 
+let deck_eq (d1 : t) (d2 : t) = 
+  List.sort_uniq compare d1 = List.sort_uniq compare d2
+
+let length (deck : t) = 
+  List.length deck
+
 (** Generate a list of integers [[low..high]] inclusive. *)
 let rec generate_ranks low high = 
   if low = high then [high]
@@ -51,6 +57,11 @@ let std_deck () : t =
 
 let sort deck = 
   List.sort cmp_card deck
+
+let rec pick deck n = 
+  match deck with
+  | [] -> None
+  | h :: t -> if n = 0 then Some h else pick t (n - 1)
 
 (** [bj_rank acc card] is the rank of the card unless it is a) a face card, in
     which case it is 10, or b) an ace, in which case it is 11, unless that 
