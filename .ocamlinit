@@ -1,0 +1,5 @@
+#require "ounit2";;
+#directory "_build";;
+#load "deck.cmo";;
+#load "command.cmo";;
+#load "main.cmo";;
