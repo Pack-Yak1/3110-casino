@@ -3,3 +3,4 @@
 #load "deck.cmo";;
 #load "command.cmo";;
 #load "main.cmo";;
+#load "blackjack.cmo";;

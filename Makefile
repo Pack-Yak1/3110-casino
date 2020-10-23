@@ -1,6 +1,9 @@
-MODULES=deck command main
+MODULES=deck command main blackjack
 OBJECTS=$(MODULES:=.cmo)
+MLS=$(MODULES:=.ml)
+MLIS=$(MODULES:=.mli)
 TEST=deck_test.byte
+MAIN=main.byte
 OCAMLBUILD=ocamlbuild -use-ocamlfind
 
 default: build
@@ -8,6 +11,9 @@ default: build
 
 build:
 	$(OCAMLBUILD) $(OBJECTS)
+
+play:
+	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
 
 test:
 	$(OCAMLBUILD) -tag 'debug' $(TEST) && ./$(TEST) -runner sequential
