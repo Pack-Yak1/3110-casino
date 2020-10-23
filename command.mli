@@ -2,7 +2,8 @@
 type command =
   | Hit
   | Stand
-  | Split
+  | Double
+  | Quit
 
 (** Raised when the command is invalid. *)
 exception Invalid_command

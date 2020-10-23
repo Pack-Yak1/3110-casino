@@ -1,7 +1,8 @@
 type command =
   | Hit 
   | Stand
-  | Split
+  | Double
+  | Quit
 
 exception Invalid_command
 
@@ -10,5 +11,6 @@ let parse str =
   match c with 
   | "hit" -> Hit
   | "stand" -> Stand
-  | "split" -> Split
+  | "double down" -> Double
+  | "quit" -> Quit
   | _ -> raise Invalid_command
