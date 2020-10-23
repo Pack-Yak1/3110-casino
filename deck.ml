@@ -27,6 +27,12 @@ let suit ((s, r) : card) =
 let rank ((s, r) : card) = 
   r
 
+let of_card ((s, r) : card) : (suit * rank) = 
+  (s, r)
+
+let of_deck (deck : t) : card list = 
+  deck
+
 let cmp_suit ((s1, r1) : card) ((s2, r2) : card) : int = 
   compare (s1 |> suit_to_int) (s2 |> suit_to_int) 
 
@@ -69,6 +75,19 @@ let rec pick deck n =
   | [] -> None
   | h :: t -> if n = 0 then Some h else pick t (n - 1)
 
+let append (d : t) (c : card) : t = 
+  c :: d
+
+let remainder (d : t) : t = 
+  match d with
+  | [] -> failwith "Deck is empty, there is no remainder."
+  | h :: t -> t
+
+let rec return (cards : t) (n : int ) : t = 
+  match n with
+  | 0 -> []
+  | n -> List.hd cards :: return (List.tl cards) (n - 1)
+
 (** [bj_rank acc card] is the rank of the card unless it is a) a face card, in
     which case it is 10, or b) an ace, in which case it is 11, unless that 
     causes the player's score to exceed 21, in which case it returns 1. *)
@@ -78,8 +97,29 @@ let bj_rank acc ((s, r) : card) =
   else 11
 
 let bj_score deck = 
-  let d = sort deck in
-  List.fold_left (fun acc card -> card |> bj_rank acc |> ( + ) acc) 0 d
+  if length deck = 2 && 
+     List.fold_left (fun acc card -> acc + bj_rank 0 card) 0 deck = 21 then -1
+  else let d = sort deck in
+    List.fold_left (fun acc card -> card |> bj_rank acc |> ( + ) acc) 0 d
+
+let concat d1 d2 = 
+  List.rev_append d1 d2
+
+let stable_concat d1 d2 = 
+  List.append d1 d2
+
+let rec n_std_decks (n : int) : t = 
+  match n with
+  | 0 -> []
+  | n -> n - 1 |> n_std_decks |> concat (std_deck ())
+
+let empty_deck () : t = 
+  []
+
+let shuffle (cards : t) : t = 
+  let random = List.map (fun n -> (Random.bits(), n)) cards in 
+  let sorted = List.sort compare random in 
+  List.map (fun (a, b) -> b) sorted
 
 let string_of_suit = function
   | S -> "S"
@@ -87,8 +127,16 @@ let string_of_suit = function
   | C -> "C"
   | D -> "D"
 
+let string_of_rank n = 
+  if 2 <= n && n <= 10 then string_of_int n
+  else if n = 11 then "J"
+  else if n = 12 then "Q"
+  else if n = 13 then "K"
+  else if n = 14 then "A"
+  else raise (InvalidRank n)
+
 let string_of_card ((s, r) : card) = 
-  "(" ^ string_of_suit s ^ ", " ^ string_of_int r ^ ")"
+  "(" ^ string_of_suit s ^ ", " ^ string_of_rank r ^ ")"
 
 (** Implementation taken from pp_lst from test file of A2. *)
 let string_of_deck lst =

@@ -23,6 +23,15 @@ val make_deck : card list -> t
 (** [std_deck ()] is a standard deck of 52 cards. *)
 val std_deck : unit -> t
 
+(** [n_std_decks n] is a deck consisting of [n] standard 52-card decks. *)
+val n_std_decks : int -> t
+
+(** [empty_deck ()] is a deck containing no cards. *)
+val empty_deck : unit -> t
+
+(** [shuffle cards] is the deck [cards] sorted in random order. *)
+val shuffle : t -> t
+
 (** [length deck] is the number of cards in [deck]. *)
 val length : t -> int
 
@@ -32,6 +41,12 @@ val suit : card -> suit
 (** [rank card] is the rank of [card]. 
     Raises: InvalidRank if rank of [card] is not in [[2..14]]. *)
 val rank : card -> rank
+
+(** [of_card card] is the pair containing the suit and rank of [card]. *)
+val of_card : card -> (suit * rank)
+
+(** [of_deck deck] is the list of cards in [deck]. *)
+val of_deck : t -> card list
 
 (** [cmp_suit c1 c2] is a positive integer if the suit of [c1] is greater than
     [c2], a negative integer if the suit of [c2] is greater than [c1], or zero 
@@ -63,9 +78,28 @@ val sort : t -> t
     [n] is greater than or equal to the number of cards in [deck]. *)
 val pick : t -> int -> card option
 
+(** [return n cards] is the first [n] cards in [cards] *)
+val return : t -> int -> t
+
+(** [append d c] is [d] with [c] appended to it at the front. *)
+val append : t -> card -> t
+
+(** [remainder d] is [d] with the top card removed. *)
+val remainder : t -> t
+
 (** [bj_score deck] is the integer score of [deck] in a traditional game of 
-    blackjack. *)
+    blackjack. If the deck is a natural blackjack (exactly one Ace and one face
+    card), then [bj_score deck] is -1 to signify its unique value. *)
 val bj_score : t -> int
+
+(** [concat d1 d2] is a deck containing all cards in d1 and d2. Repeated cards
+    are allowed. The order of cards is not preserved. *)
+val concat : t -> t -> t
+
+(** [stable_concat d1 d2] is a deck containing all cards in d1 and d2. 
+    Repeated cards are allowed. The order of cards is preserved, unlike in 
+    [concat d1 d2]. *)
+val stable_concat : t -> t -> t
 
 (** [string_of_card card] is a 2-character string representing [card]. The
     first character is the suit, and the second character is the rank. *)
