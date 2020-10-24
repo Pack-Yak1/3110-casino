@@ -1,0 +1,3 @@
+unzip 3110project.zip
+enter "make build" into terminal
+enter "make play" into terminal

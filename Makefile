@@ -1,4 +1,4 @@
-MODULES=deck command main blackjack
+MODULES=deck command main blackjack authors
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)
@@ -18,9 +18,14 @@ play:
 test:
 	$(OCAMLBUILD) -tag 'debug' $(TEST) && ./$(TEST) -runner sequential
 
-docs:
-	mkdir -p doc
-	ocamldoc -d doc -html deck.mli
+docs: build
+	mkdir -p doc.private
+	ocamlfind ocamldoc -I _build -package yojson,ANSITerminal \
+		-html -stars -d doc.private \
+		-inv-merge-ml-mli -m A $(MLIS) $(MLS)
+
+zip:
+	zip 3110project.zip *.ml* _tags .merlin .ocamlinit Makefile
 
 clean:
 	ocamlbuild -clean
