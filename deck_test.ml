@@ -63,6 +63,7 @@ let d4 = make_deck [c4; c4; c4; c3; c3]
 let d3_sorted = make_deck [c1; c2; c3; c4]
 let d5 = make_deck []
 let d6 = make_deck [c5; c6; c7]
+let d7 = make_deck [c1]
 
 let tests = [
   test_cmp_suit "spades > hearts" c1 c2 Greater;
@@ -86,7 +87,7 @@ let tests = [
   test_cmp_card "equal rank and suit" c9 c9 Equal;
 
   test_length "zero" d5 0;
-  test_length "two" d2 2;
+  test_length "one" d7 1;
   test_length "52" d0 52;
 
   test_sort "empty" d5 d5;

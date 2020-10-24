@@ -78,7 +78,8 @@ val sort : t -> t
     [n] is greater than or equal to the number of cards in [deck]. *)
 val pick : t -> int -> card option
 
-(** [return n cards] is the first [n] cards in [cards] *)
+(** [return n cards] is the first [n] cards in [cards].
+    Requires: n is less than or equal to the number of cards in [cards]. *)
 val return : t -> int -> t
 
 (** [append d c] is [d] with [c] appended to it at the front. *)

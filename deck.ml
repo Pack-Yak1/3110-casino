@@ -8,8 +8,15 @@ type t = card list
 
 exception InvalidRank of int
 
+let lowest_rank = 2
+let highest_rank = 14
+let j_rank = 11
+let q_rank = 12
+let k_rank = 13
+let a_rank = 14
+
 let make_card (s : suit) (r : rank) : card = 
-  if r > 14 || r < 2 then raise(InvalidRank r) else (s, r)
+  if r > highest_rank || r < lowest_rank then raise(InvalidRank r) else (s, r)
 
 let make_deck (lst : card list) : t = 
   lst
@@ -61,7 +68,7 @@ let make_suit suit ranks =
   List.map (make_card suit) ranks 
 
 let std_deck () : t = 
-  let ranks = generate_ranks 2 14 in
+  let ranks = generate_ranks lowest_rank highest_rank in
   make_suit S ranks
   |> List.append (make_suit H ranks) 
   |> List.append (make_suit C ranks) 
@@ -86,13 +93,13 @@ let remainder (d : t) : t =
 let rec return (cards : t) (n : int ) : t = 
   match n with
   | 0 -> []
-  | n -> List.hd cards :: return (List.tl cards) (n - 1)
+  | n -> append (return (List.tl cards) (n - 1)) (List.hd cards) 
 
 (** [bj_rank acc card] is the rank of the card unless it is a) a face card, in
     which case it is 10, or b) an ace, in which case it is 11, unless that 
     causes the player's score to exceed 21, in which case it returns 1. *)
 let bj_rank acc ((s, r) : card) = 
-  if r < 14 then r |> min 10
+  if r < a_rank then r |> min 10
   else if acc > 10 then 1
   else 11
 
@@ -108,13 +115,16 @@ let concat d1 d2 =
 let stable_concat d1 d2 = 
   List.append d1 d2
 
-let rec n_std_decks (n : int) : t = 
-  match n with
-  | 0 -> []
-  | n -> n - 1 |> n_std_decks |> concat (std_deck ())
-
 let empty_deck () : t = 
   []
+
+let rec n_std_decks_helper (n : int) (acc : t) : t = 
+  match n with
+  | 0 -> acc
+  | n -> std_deck () |> concat acc |> n_std_decks_helper (n - 1)
+
+let n_std_decks (n : int) : t = 
+  empty_deck () |> n_std_decks_helper n
 
 let shuffle (cards : t) : t = 
   let random = List.map (fun n -> (Random.bits(), n)) cards in 
@@ -122,17 +132,17 @@ let shuffle (cards : t) : t =
   List.map (fun (a, b) -> b) sorted
 
 let string_of_suit = function
-  | S -> "S"
-  | H -> "H"
-  | C -> "C"
-  | D -> "D"
+  | S -> "♤"
+  | H -> "♡"
+  | C -> "♧"
+  | D -> "♢"
 
 let string_of_rank n = 
-  if 2 <= n && n <= 10 then string_of_int n
-  else if n = 11 then "J"
-  else if n = 12 then "Q"
-  else if n = 13 then "K"
-  else if n = 14 then "A"
+  if lowest_rank <= n && n <= 10 then string_of_int n
+  else if n = j_rank then "J"
+  else if n = q_rank then "Q"
+  else if n = k_rank then "K"
+  else if n = a_rank then "A"
   else raise (InvalidRank n)
 
 let string_of_card ((s, r) : card) = 
