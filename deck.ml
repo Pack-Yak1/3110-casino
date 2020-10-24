@@ -93,7 +93,11 @@ let remainder (d : t) : t =
 let rec return (cards : t) (n : int ) : t = 
   match n with
   | 0 -> []
-  | n -> append (return (List.tl cards) (n - 1)) (List.hd cards) 
+  | n -> begin
+      match cards with
+      | [] -> failwith "not enough cards to draw"
+      | h :: t -> (n - 1 |> return t |> append) h
+    end
 
 (** [bj_rank acc card] is the rank of the card unless it is a) a face card, in
     which case it is 10, or b) an ace, in which case it is 11, unless that 
