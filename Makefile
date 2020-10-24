@@ -29,4 +29,4 @@ zip:
 
 clean:
 	ocamlbuild -clean
-	rm -rf doc
+	rm -rf doc.private 3110project.zip
