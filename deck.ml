@@ -104,10 +104,10 @@ let bj_rank acc ((s, r) : card) =
   else 11
 
 let bj_score deck = 
-  if length deck = 2 && 
-     List.fold_left (fun acc card -> acc + bj_rank 0 card) 0 deck = 21 then -1
-  else let d = sort deck in
-    List.fold_left (fun acc card -> card |> bj_rank acc |> ( + ) acc) 0 d
+  let d = sort deck in
+  let sum = List.fold_left (fun acc card -> acc + bj_rank acc card) 0 d in
+  let nat_bj = length deck = 2 && sum = 21 in
+  if nat_bj then -1 else sum
 
 let concat d1 d2 = 
   List.rev_append d1 d2

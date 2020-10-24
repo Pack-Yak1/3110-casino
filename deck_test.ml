@@ -13,38 +13,31 @@ let int_to_cmp x =
 
 let test_cmp_suit name c1 c2 expected_output = 
   name >:: (fun _ -> 
-      assert_equal 
-        expected_output (c2 |> cmp_suit c1 |> int_to_cmp))
+      assert_equal expected_output (c2 |> cmp_suit c1 |> int_to_cmp))
 
 let test_cmp_rank name c1 c2 expected_output = 
   name >:: (fun _ -> 
-      assert_equal 
-        expected_output (c2 |> cmp_rank c1 |> int_to_cmp))
+      assert_equal expected_output (c2 |> cmp_rank c1 |> int_to_cmp))
 
 let test_cmp_card name c1 c2 expected_output = 
   name >:: (fun _ -> 
-      assert_equal 
-        expected_output (c2 |> cmp_card c1 |> int_to_cmp))
+      assert_equal expected_output (c2 |> cmp_card c1 |> int_to_cmp))
 
 let test_length name deck expected_output = 
   name >:: (fun _ -> 
-      assert_equal 
-        expected_output (length deck))
+      assert_equal expected_output (length deck))
 
 let test_sort name deck expected_output = 
   name >:: (fun _ -> 
-      assert_equal 
-        expected_output (sort deck))
+      assert_equal expected_output (sort deck))
 
 let test_pick name deck n expected_output = 
   name >:: (fun _ -> 
-      assert_equal 
-        expected_output (pick deck n))
+      assert_equal expected_output (pick deck n))
 
 let test_bj_score name deck expected_output = 
   name >:: (fun _ -> 
-      assert_equal 
-        expected_output (bj_score deck))
+      assert_equal expected_output (bj_score deck) ~printer:string_of_int) 
 
 let c1 = make_card S 2
 let c2 = make_card H 3
@@ -105,6 +98,7 @@ let tests = [
   test_bj_score "ace = 11 and 1" (make_deck [c1; c2; c9; c9]) 17;
   test_bj_score "ace makes 21" (make_deck [c9; c4; c4]) 21;
   test_bj_score "ace calculated last" (make_deck [c9; c7; c7]) 21;
+  test_bj_score "natural blackjack" (make_deck [c5; c9]) ~-1;
 ]
 
 let suite =
