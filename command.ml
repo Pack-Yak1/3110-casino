@@ -3,6 +3,7 @@ type command =
   | Stand
   | Double
   | Quit
+  | Tools
 
 exception Invalid_command
 
@@ -13,4 +14,5 @@ let parse str =
   | "stand" -> Stand
   | "double down" -> Double
   | "quit" -> Quit
+  | "tools" -> Tools
   | _ -> raise Invalid_command

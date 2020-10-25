@@ -1,4 +1,4 @@
-MODULES=deck command main blackjack authors
+MODULES=deck command main blackjack authors tools
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)

@@ -4,6 +4,7 @@ type command =
   | Stand
   | Double
   | Quit
+  | Tools
 
 (** Raised when the command is invalid. *)
 exception Invalid_command
