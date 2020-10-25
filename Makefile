@@ -25,8 +25,8 @@ docs: build
 		-inv-merge-ml-mli -m A $(MLIS) $(MLS)
 
 zip:
-	zip 3110project.zip *.ml* _tags .merlin .ocamlinit Makefile INSTALL.txt
+	zip src.zip *.ml* _tags .merlin .ocamlinit Makefile INSTALL.txt
 
 clean:
 	ocamlbuild -clean
-	rm -rf doc.private 3110project.zip
+	rm -rf doc.private src.zip
