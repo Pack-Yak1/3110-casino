@@ -95,6 +95,7 @@ let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
                        greater than 0 and less than your limit.\n"
 let currency_msg = "Please enter your unit of currency.\n"
 let invalid_double_msg = "You do not have enough money to double."
+let no_entry_msg = "Please enter a number."
 let goodbye_msg = "Goodbye!"
 
 (** [enter_name n] is a string prompt for the user to enter the [n]-th 
@@ -105,8 +106,8 @@ let enter_name n =
 (** [update_currency s] is [s] with unit of currency equal to the
     entered string. *)
 let update_currency s =
-  print_endline "Please enter the unit of currency.";
-  print_endline input_prompt;
+  print_endline currency_msg;
+  print_string [] input_prompt;
   let curr = read_line () in
   { s with currency = curr}
 
@@ -150,7 +151,7 @@ let rec choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit =
       print_endline invalid_msg;
       choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
     end
-  | None -> print_endline "Please enter a number.";
+  | None -> print_endline no_entry_msg;
     choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
 
 (** [deck n state] is a game state equivalent to [state], except with the deck
