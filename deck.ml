@@ -131,6 +131,7 @@ let n_std_decks (n : int) : t =
   empty_deck () |> n_std_decks_helper n
 
 let shuffle (cards : t) : t = 
+  Random.self_init ();
   let random = List.map (fun n -> (Random.bits(), n)) cards in 
   let sorted = List.sort compare random in 
   List.map (fun (a, b) -> b) sorted
