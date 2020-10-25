@@ -152,14 +152,14 @@ let string_of_rank n =
 let string_of_card ((s, r) : card) = 
   "(" ^ string_of_suit s ^ ", " ^ string_of_rank r ^ ")"
 
-(** Implementation taken from pp_lst from test file of A2. *)
-let string_of_deck lst =
-  let pp_elts lst =
-    let rec loop n acc = function
-      | [] -> acc
-      | [h] -> acc ^ string_of_card h
-      | h1 :: (h2 :: t as t') ->
-        if n = 100 then acc ^ "..."  (* stop printing long list *)
-        else loop (n + 1) (acc ^ (string_of_card h1) ^ "; ") t'
-    in loop 0 "" (sort lst)
-  in "[" ^ pp_elts lst ^ "]"
+let rec string_of_deck_helper deck acc = 
+  match deck with
+  | [] -> acc
+  | [h] -> acc ^ string_of_card h
+  | h1 :: (h2 :: t as t') -> begin
+      string_of_deck_helper t' (acc ^ string_of_card h1 ^ "; ")
+    end
+
+let string_of_deck deck = 
+  let d = sort deck in
+  "[" ^ string_of_deck_helper d "" ^ "]"
