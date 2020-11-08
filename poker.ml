@@ -1,5 +1,7 @@
 open Deck
 
+let initial_cards = 2
+
 type hand =
   | HighCard of card list
   | Pair of rank * card list

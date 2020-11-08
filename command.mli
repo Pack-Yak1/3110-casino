@@ -26,4 +26,4 @@ val parse_bj : string -> bj_command
 (** [parse_p str] parses a player's input into a poker command. Case does not 
     matter. 
     Raises: [InvalidCommand] if the command is invalid. *)
-val parse_p : string -> bj_command
+val parse_p : string -> p_command

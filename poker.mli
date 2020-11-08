@@ -12,6 +12,9 @@ type hand =
   | StraightFlush of card list
   | RoyalFlush
 
+(** The number of cards each player begins with. *)
+val initial_cards : int
+
 (** [hand_value cards] is the greatest possible hand value.
     The length of cards has to be 7. *)
 val hand_value : card list -> hand

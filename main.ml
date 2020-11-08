@@ -61,7 +61,7 @@ let default_game = {
 }
 
 (** List of names of supported games. *)
-let games = ["blackjack"]
+let games = ["blackjack"; "poker"]
 
 (** Valid commands for each game. *)
 let blackjack_rules = "Rules\n Hit: Take another card from the dealer.\n \
@@ -69,11 +69,18 @@ let blackjack_rules = "Rules\n Hit: Take another card from the dealer.\n \
                        bet and commit to standing after one more hit.\n Quit: \
                        Quit the game.\n Tools: View or edit settings and \
                        rules."
-let poker_rules = "To be implemented"
+(** TODO: Finish typing rules *)
+let poker_rules = "Rules\n Check: Decline to bet. You keep your hand but do \
+                   not open.\n 
+                   Stand: Take no more cards.\n Double down: Double your \
+                   bet and commit to standing after one more hit.\n Quit: \
+                   Quit the game.\n Tools: View or edit settings and \
+                   rules."
 let bridge_rules = "To be implemented"
 
 let rules = [
   ("blackjack", blackjack_rules);
+  ("poker", poker_rules)
 ]
 
 (* Begin ingame prompts: *)
@@ -268,7 +275,7 @@ let print_rules name =
 
 (** Determines whose turn it is, then prompts and takes a command. Recurses
     to automatically begin the next action. *)
-let rec game_turn s =
+let rec bj_turn s =
   let active_player_index = s.turn in
   if active_player_index >= s.player_num then dealer_turn s
   else
@@ -279,21 +286,21 @@ let rec game_turn s =
       | Stand -> stand_protocol active_player s 
       | Double -> double_protocol active_player s
       | Quit -> quit_protocol s
-      | Tools -> let _ = print_rules s.name in game_turn s
+      | Tools -> let _ = print_rules s.name in bj_turn s
     with
     | Invalid_command -> invalid_protocol s
 
 and invalid_protocol state = 
   print_endline invalid_command_msg;
-  game_turn state 
+  bj_turn state 
 
 and hit_protocol player state = 
   deal player state;
-  game_turn state
+  bj_turn state
 
 and stand_protocol player state = 
   print_hand state state.turn;
-  game_turn { state with turn = state.turn + 1 }
+  bj_turn { state with turn = state.turn + 1 }
 
 and double_protocol player state =
   if player.bet <= player.money / 2 then begin
@@ -302,13 +309,13 @@ and double_protocol player state =
     stand_protocol player state
   end else
     print_endline invalid_double_msg;
-  game_turn state
+  bj_turn state
 
 and quit_protocol state = 
   print_endline goodbye_msg;
   exit 0
 
-let play_game () =
+let shared_init () = 
 
   (* Select cardgame *)
   let s = choose_game () in
@@ -329,11 +336,20 @@ let play_game () =
   let state = update_players num_players players s_with_decks in
   let state = update_currency state in
 
+  let starting_cards = begin
+    if s.name = "blackjack" then Blackjack.initial_cards
+    else if s.name = "poker" then Poker.initial_cards
+    else failwith "A game was implemented without initial cards in game module."
+  end in
+
   (* Deal cards to every player, then the dealer. *)
-  deal_all state Blackjack.initial_cards;
+  deal_all state starting_cards; state
+
+let play_game () =
+  let state = shared_init () in
 
   (* Begins the game *)
-  game_turn state
+  bj_turn state
 
 (** [main ()] welcomes the player and begins the game construction protocol. *)
 let main () =
