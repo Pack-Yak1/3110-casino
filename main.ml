@@ -274,7 +274,7 @@ let rec game_turn s =
   else
     let active_player = List.nth s.players active_player_index in
     start_turn s active_player_index;
-    try match read_line() |> parse with
+    try match read_line() |> parse_bj with
       | Hit -> hit_protocol active_player s 
       | Stand -> stand_protocol active_player s 
       | Double -> double_protocol active_player s
