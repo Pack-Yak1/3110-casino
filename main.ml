@@ -11,28 +11,6 @@ let default_allowance = 100
 (** By default, the in-game currency is USD. *)
 let default_currency = "USD"
 
-(** The abstract type representing meta game information for a given gamemode,
-    which includes whether you are allowed to bet before cards are dealt, and
-    if there exists a dealer, and the number of cards each player is dealt 
-    initially. *)
-type game_info = {
-  init_bet : bool;
-  has_dealer : bool;
-  initial_cards : int
-}
-
-let bj_info = {
-  init_bet = true;
-  has_dealer = true;
-  initial_cards = Blackjack.initial_cards
-}
-
-let poker_info = {
-  init_bet = false;
-  has_dealer = false;
-  initial_cards = Poker.initial_cards
-}
-
 (** The abstract type representing a player. [name] is the name of the player,
     [hand] is the player's deck, [money] is the amount of money the player has 
     remaining. *)
@@ -257,9 +235,9 @@ let deal_all state n has_dealer =
   List.iter (deal_n n state) players;
   if has_dealer then deal_n n state dealer else ()
 
-(** [showdown state] is a list containing whether the players in [state]
+(** [bj_showdown state] is a list containing whether the players in [state]
     have won or not, in their respective order *)
-let showdown state = 
+let bj_showdown state = 
   let dealer_score = bj_score dealer.hand in
   let outcome = if dealer_score > 21 then DealerBust else Match dealer_score in
   let scores = List.map (fun p -> bj_score p.hand) state.players in
@@ -295,7 +273,7 @@ let dealer_turn state =
   while bj_score dealer.hand < 17 do
     deal dealer state;
   done;
-  showdown state |> payout state
+  bj_showdown state |> payout state
 
 (** Prints the rules of the game with name [name] *)
 let print_rules name = 
@@ -348,6 +326,32 @@ and bj_double_protocol player state =
 let poker_turn s = 
   failwith "unimplemented"
 
+(** The abstract type representing meta game information for a given gamemode,
+    which includes whether you are allowed to bet before cards are dealt, and
+    if there exists a dealer, and the number of cards each player is dealt 
+    initially. It also contains the appropriate function for executing game
+    turns for the game mode. *)
+type game_info = {
+  init_bet : bool;
+  has_dealer : bool;
+  initial_cards : int;
+  turn : game_state -> unit;
+}
+
+let bj_info = {
+  init_bet = true;
+  has_dealer = true;
+  initial_cards = Blackjack.initial_cards;
+  turn = bj_turn;
+}
+
+let poker_info = {
+  init_bet = false;
+  has_dealer = false;
+  initial_cards = Poker.initial_cards;
+  turn = poker_turn
+}
+
 (** [info str] returns the [game_info] associated with the game name, [str]. 
     Raises an error if [str] is not a supported game mode. *)
 let info str = 
@@ -355,22 +359,12 @@ let info str =
   else if str = "poker" then poker_info
   else failwith "An invalid game name was used in shared_init ()" 
 
-(** [shared_init ()] is a game state with number of decks, number of players, 
-    player names and initial bets (if the game mode permits) taken from user
-    responses in StdIn. *)
-let shared_init () = 
-
-  (* Select cardgame *)
-  let s = choose_game () in
-  print_rules s.name;
-
-  (* Determine if players can make initial bets, and if there is a dealer
-     for the selected game mode, and the number of cards each player begins 
-     with. *)
-  let game_info = info s.name in
-  let init_bet = game_info.init_bet
-  and has_dealer = game_info.has_dealer 
-  and starting_cards = game_info.initial_cards in
+(** [shared_init s init_bet has_dealer starting_cards turn] is a game state 
+    with number of decks, number of players, player names and initial bets 
+    (iff [init_bet] is true) taken from user responses in StdIn. The state 
+    initializes a dealer iff [has_dealer] is true, and deals each player 
+    [starting_cards]. The game state returned is [s] mutated. *)
+let shared_init s init_bet has_dealer starting_cards = 
 
   (* Select number of decks for game *)
   let n = choose_num_geq_1_leq_n number_of_decks_msg invalid_n_msg 0 false in
@@ -392,14 +386,25 @@ let shared_init () =
 
 let play_game () =
 
+  (* Select cardgame *)
+  let s = choose_game () in
+  print_rules s.name;
+
+  (* Determine if players can make initial bets, and if there is a dealer
+       for the selected game mode, and the number of cards each player begins 
+       with. *)
+  let game_info = info s.name in
+  let init_bet = game_info.init_bet
+  and has_dealer = game_info.has_dealer 
+  and starting_cards = game_info.initial_cards 
+  and turn = game_info.turn in
+
   (* Creates a game state with number of decks, number of players, player names 
      and initial bets (if the game mode permits) *)
-  let state = shared_init () in
+  let state = shared_init s init_bet has_dealer starting_cards in
 
   (* Begins the game *)
-  if state.name = "blackjack" then bj_turn state
-  else if state.name = "poker" then poker_turn state
-  else failwith "game_state initialized with invalid game mode"
+  turn state
 
 (** [main ()] welcomes the player and begins the game construction protocol. *)
 let main () =
