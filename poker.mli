@@ -1,26 +1,26 @@
 open Deck
 
 type hand =
-  | HighCard of card list
-  | Pair of rank * card list
-  | TwoPairs of rank * rank * card list
-  | ThreeOfAKind of rank * card list
-  | Straight of card list
-  | Flush of card list
+  | HighCard of Deck.t
+  | Pair of rank * Deck.t
+  | TwoPairs of rank * rank * Deck.t
+  | ThreeOfAKind of rank * Deck.t
+  | Straight of Deck.t
+  | Flush of Deck.t
   | FullHouse of rank * rank
-  | FourOfAKind of rank * card list
-  | StraightFlush of card list
+  | FourOfAKind of rank * Deck.t
+  | StraightFlush of Deck.t
   | RoyalFlush
 
 (** The number of cards each player begins with. *)
 val initial_cards : int
 
-(** [hand_value cards] is the greatest possible hand value.
-    The length of cards has to be 7. *)
-val hand_value : card list -> hand
+(** [hand_value deck] is the greatest possible hand value.
+    Requires: the length of deck must be 7. *)
+val hand_value : Deck.t -> hand
 
-(** [cmp_hand c1 c2] compares the hand value of two card lists. Returns 1 if 
-    hand value of c1 is greater than that of c2, -1 for less than, 0 for 
+(** [cmp_hand d1 d2] compares the hand value of two decks. Returns 1 if 
+    hand value of d1 is greater than that of d2, -1 for less than, 0 for 
     equal. *)
-val cmp_hand : card list -> card list -> int
+val cmp_hand : Deck.t -> Deck.t -> int
 
