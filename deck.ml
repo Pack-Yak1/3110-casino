@@ -134,6 +134,7 @@ let rank_filter r cards : t =
   List.filter (fun (s, n) -> n <> r) cards
 
 let flush deck = 
+  let deck = rev_sort deck in 
   match sort_suit deck with
   | [c1; c2; c3; c4; c5; c6; c7] as c -> 
     if cmp_suit c1 c7 = 0 then c
