@@ -29,6 +29,9 @@ val n_std_decks : int -> t
 (** [empty_deck ()] is a deck containing no cards. *)
 val empty_deck : unit -> t
 
+(** [is_empty deck] is true if [deck] is empty, false otherwise. *)
+val is_empty : t -> bool
+
 (** [shuffle cards] is the deck [cards] sorted in random order. *)
 val shuffle : t -> t
 
@@ -66,6 +69,11 @@ val cmp_rank : card -> card -> int
     Requires: [c1] and [c2] are valid cards. *)
 val cmp_card : card -> card -> int
 
+(** [cmp_high_cards d1 d2] is a positive integer if the [d1] has greater rank of
+    card than [c2], a negative integer if [c2] has greater ranl than [c1], or 
+    zero if [c1] and [c2] have same cards. *)
+val cmp_high_cards : t -> t -> int
+
 (** [deck_eq d1 d2] is true if [d1] and [d2] contain the same cards. 
     Otherwise it is false.  *)
 val deck_eq : t -> t -> bool
@@ -73,6 +81,9 @@ val deck_eq : t -> t -> bool
 (** [sort deck] is [deck] sorted in ascending order by rank, then by suit in
     the case of a rank tie. *)
 val sort : t -> t
+
+(** [rev_sort deck] is [deck] sorted in descending order of rank. *)
+val rev_sort : t -> t
 
 (** [pick deck n] is the 0-index n-th card option of [deck]. Returns None if
     [n] is greater than or equal to the number of cards in [deck]. *)
@@ -92,6 +103,24 @@ val remainder : t -> t
     blackjack. If the deck is a natural blackjack (exactly one Ace and one face
     card), then [bj_score deck] is -1 to signify its unique value. *)
 val bj_score : t -> int
+
+(** [rank_of_pair cards] is the rank of first pair in [cards]. Return None is
+    thre is no pair in [cards] *)
+val rank_of_pair : t -> rank option
+
+(** [rank_filter r cards] is [cards] without card with rank [r]. *)
+val rank_filter : rank -> t -> t
+
+(** [flush cards] is part of [cards] that has five to seven cards with the
+    same suit.
+    Requires: [cards] must contain exactly seven cards. *)
+val flush : t -> t
+
+(** [straigth cards] is five cards in [cards] with consecutive rank value. *)
+val straight : t -> t
+
+(** [straigth cards] is cards in [cards] that is both flush and straight. *)
+val straight_flush : t -> t
 
 (** [concat d1 d2] is a deck containing all cards in d1 and d2. Repeated cards
     are allowed. The order of cards is not preserved. *)

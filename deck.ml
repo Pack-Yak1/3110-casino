@@ -51,6 +51,11 @@ let cmp_card (c1 : card) (c2 : card) : int =
   | 0 -> cmp_suit c1 c2
   | x -> x
 
+let cmp_high_cards c1 c2 = 
+  let l1 = List.map (fun c -> rank c) c1 in 
+  let l2 = List.map (fun c -> rank c) c2 in 
+  compare l1 l2
+
 let deck_eq (d1 : t) (d2 : t) = 
   List.sort_uniq compare d1 = List.sort_uniq compare d2
 
@@ -76,6 +81,12 @@ let std_deck () : t =
 
 let sort deck = 
   List.sort cmp_card deck
+
+let rev_sort deck =
+  deck |> List.sort cmp_rank |> List.rev
+
+let sort_suit deck =
+  List.sort cmp_suit deck
 
 let rec pick deck n = 
   match deck with
@@ -113,6 +124,69 @@ let bj_score deck =
   let nat_bj = length deck = 2 && sum = 21 in
   if nat_bj then -1 else sum
 
+let rec rank_of_pair = function
+  | [] | [_] -> None
+  | h1 :: h2 :: t -> 
+    if cmp_rank h1 h2 = 0 then Some (rank h1)
+    else rank_of_pair (h2 :: t)
+
+let rank_filter r cards : t =
+  List.filter (fun (s, n) -> n <> r) cards
+
+let flush deck = 
+  match sort_suit deck with
+  | [c1; c2; c3; c4; c5; c6; c7] as c -> 
+    if cmp_suit c1 c7 = 0 then c
+    else if cmp_suit c1 c6 = 0
+    then [c1; c2; c3; c4; c5; c6]
+    else if cmp_suit c1 c5 = 0 
+    then rev_sort [c1; c2; c3; c4; c5]
+    else if cmp_suit c2 c7 = 0
+    then [c2; c3; c4; c5; c6; c7]
+    else if cmp_suit c2 c6 = 0 
+    then rev_sort [c2; c3; c4; c5; c6]
+    else if cmp_suit c3 c7 = 0 
+    then rev_sort [c3; c4; c5; c6; c7]
+    else []
+  | _ -> [] 
+
+let rec check_straight = function
+  | [] | [_] -> true 
+  | h1 :: h2 :: t -> if rank h1 - rank h2 = 1 
+    then check_straight (h2 :: t) else false
+
+let remove_dup_rank cards : t = 
+  let rec helper = function
+    | [] -> []
+    | (s, r) :: t -> 
+      (s, r) :: helper (rank_filter r t)
+  in helper cards
+
+let straight cards = 
+  let cards = cards |> rev_sort |> remove_dup_rank in 
+  match cards with 
+  | [c1; c2; c3; c4; c5; c6; c7] -> 
+    if check_straight [c1; c2; c3; c4; c5]
+    then [c1; c2; c3; c4; c5]
+    else if check_straight [c2; c3; c4; c5; c6]
+    then [c2; c3; c4; c5; c6]
+    else if check_straight [c3; c4; c5; c6; c7]
+    then [c3; c4; c5; c6; c7]
+    else []
+  | [c1; c2; c3; c4; c5; c6] -> 
+    if check_straight [c1; c2; c3; c4; c5]
+    then [c1; c2; c3; c4; c5]
+    else if check_straight [c2; c3; c4; c5; c6]
+    then [c2; c3; c4; c5; c6]
+    else []
+  | [c1; c2; c3; c4; c5] as c -> 
+    if check_straight c then c else []
+  | _ -> []
+
+let straight_flush cards = 
+  let fl = flush cards in
+  straight fl 
+
 let concat d1 d2 = 
   List.rev_append d1 d2
 
@@ -121,6 +195,10 @@ let stable_concat d1 d2 =
 
 let empty_deck () : t = 
   []
+
+let is_empty = function
+  | [] -> true
+  | _ -> false 
 
 let rec n_std_decks_helper (n : int) (acc : t) : t = 
   match n with
