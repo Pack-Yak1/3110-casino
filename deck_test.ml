@@ -115,32 +115,27 @@ let s2 = shuffle (std_deck())
 let s3 = shuffle d4
 let s4 = shuffle d8
 
-let rec string_of_card_list = function
-  | [] -> ""
-  | h :: t -> 
-    string_of_card h ^ ", " ^ string_of_card_list t
-
 let string_of_hand = function
-  | HighCard c -> "HighCard " ^ string_of_card_list c
+  | HighCard c -> "HighCard " ^ string_of_deck c
   | Pair (r, c) -> 
-    "Pair of " ^ string_of_int r ^ " with " ^ string_of_card_list c
+    "Pair of " ^ string_of_int r ^ " with " ^ string_of_deck c
   | TwoPairs (r1, r2, c) -> 
     "2 Pair of " ^ string_of_int r1 ^ ", " ^ string_of_int r2 ^ " with " ^ 
-    string_of_card_list c
+    string_of_deck c
   | ThreeOfAKind (r, c) -> "3 of " ^ string_of_int r ^ " with " ^ 
-                           string_of_card_list c
-  | Straight c-> "straight" ^ string_of_card_list c
-  | Flush c -> "flush " ^ string_of_card_list c
-  | FullHouse (r1, r2) -> "full house, 3 of " ^ string_of_int r1 ^ " and 2 of "
-                          ^ string_of_int r2
+                           string_of_deck c
+  | Straight c-> "Straight" ^ string_of_deck c
+  | Flush c -> "Flush " ^ string_of_deck c
+  | FullHouse (r1, r2) -> "Full house, 3 of " ^ string_of_int r1 ^ 
+                          " and 2 of " ^ string_of_int r2
   | FourOfAKind (r, c) -> 
-    "4 kind of " ^ string_of_int r ^ " with " ^ string_of_card_list c
-  | StraightFlush c -> "straight flush " ^ string_of_card_list c
-  | RoyalFlush -> "royal flush"
+    "4 kind of " ^ string_of_int r ^ " with " ^ string_of_deck c
+  | StraightFlush c -> "Straight flush " ^ string_of_deck c
+  | RoyalFlush -> "Royal flush"
 
-let test_hand_value name cards expected_output  =
+let test_hand_value name deck expected_output  =
   name >:: (fun _ -> 
-      assert_equal expected_output (hand_value cards)
+      assert_equal expected_output (hand_value deck)
         ~printer: string_of_hand)
 
 let test_cmp_hand name c1 c2 expected_output  =
@@ -153,8 +148,6 @@ let p2  = make_card S 2
 let p3  = make_card S 3
 let p4  = make_card S 4
 let p5  = make_card S 5
-let p6  = make_card S 6
-let p7  = make_card S 7
 let p8  = make_card S 8
 let p9  = make_card S 9
 let p10 = make_card S 10
@@ -162,59 +155,52 @@ let p11 = make_card S 11
 let p12 = make_card S 12
 let p13 = make_card S 13
 let p14 = make_card H 14
-let p15 = make_card H 2
-let p16 = make_card H 3
-let p17 = make_card H 4
 let p18 = make_card H 5
-let p19 = make_card H 6
-let p20 = make_card H 7
-let p21 = make_card H 8
 let p22 = make_card H 9
 let p23 = make_card H 10
-let p24 = make_card H 11
-let p25 = make_card H 12
 let p26 = make_card H 13
 let p27 = make_card C 14
-let p28 = make_card C 2
-let p29 = make_card C 3
 let p30 = make_card C 4
-let p31 = make_card C 5
-let p32 = make_card C 6
 let p33 = make_card C 7
-let p34 = make_card C 8
 let p35 = make_card C 9
-let p36 = make_card C 10
 let p37 = make_card C 11
-let p38 = make_card C 12
-let p39 = make_card C 13
 let p40 = make_card D 14
 let p41 = make_card D 2
 let p42 = make_card D 3
-let p43 = make_card D 4
-let p44 = make_card D 5
 let p45 = make_card D 6
 let p46 = make_card D 7
-let p47 = make_card D 8
 let p48 = make_card D 9
 let p49 = make_card D 10
-let p50 = make_card D 11
-let p51 = make_card D 12
-let p52 = make_card D 13
 
-let l1 = [p3; p47; p12; p42; p28; p36; p41]
-let l2 = [p16; p52; p17; p21; p14; p9; p46]
-let l3 = [p4; p30; p6; p1; p32; p33; p43]
-let l4 = [p50; p11; p31; p15; p8; p40; p26]
-let l5 = [p45; p10; p29; p49; p5; p2; p19]
-let l6 = [p49; p14; p8; p52; p48; p46; p38]
-let l7 = [p31; p28; p20; p37; p34; p7; p4]
-let l8 = [p16; p27; p43; p21; p3; p13; p26]
-let l9 = [p22; p44; p45; p41; p7; p40; p50]
-let l10 = [p39; p13; p32; p26; p1; p42; p38]
-let l11 = [p1; p10; p12; p32; p50; p13; p11]
-let l12 = [p9; p10; p12; p32; p50; p13; p11]
-let l13 = [p48; p34; p38; p20; p49; p19; p31]
-let l14 = [p22; p33; p48; p27; p35; p6; p9]
+
+let l1 = make_deck [p3; p37; p12; p42; p2; p10; p41]
+let l1' = make_deck [p12]
+let l2 = make_deck [p5; p40; p26; p2; p23; p11; p45]
+let l2' = make_deck [p40; p26; p11; p23; p45]
+let l3 = make_deck [p23; p49; p33; p46; p10; p11; p45]
+let l4 = make_deck [p30; p9; p46; p23; p11; p49; p45]
+let l4' = make_deck [p11; p9; p46]
+let l5 = make_deck [p30; p9; p46; p23; p11; p49; p33]
+let l5' = make_deck [p11]
+let l6 = make_deck [p26; p8; p9; p37; p4; p18; p2]
+let l6' = make_deck [p26; p37; p48; p8; p18]
+let l7 = make_deck [p5; p40; p33; p26; p2; p46; p10]
+let l7' = make_deck [p40; p26; p10]
+let l8 = make_deck [p4; p26; p49; p26; p23; p3; p27]
+let l8' = make_deck [p27]
+let l9 = make_deck [p3; p30; p5; p10; p18; p9; p2]
+let l9' = make_deck [p10; p9; p5; p3; p2]
+let l10 = make_deck [p3; p10; p49; p30; p5; p23; p37]
+let l10' = make_deck [p37; p5]
+let l11 = make_deck [p1; p10; p12; p37; p42; p13; p11]
+let l12 = make_deck [p3; p10; p12; p9; p42; p13; p11]
+let l12' = make_deck [p13; p12; p11; p10; p9]
+let l13 = make_deck [p3; p5; p45; p46; p11; p9; p30]
+let l13' = make_deck [p46; p45; p5; p30; p3]
+let l14 = make_deck [p22; p33; p48; p27; p35; p2; p9]
+let l14' = make_deck [p27]
+let l15 = make_deck [p1; p14; p40; p27; p35; p2; p9]
+let l16 = make_deck [p1; p14; p40; p27; p13; p2; p8]
 
 let tests = [
   test_cmp_suit "spades > hearts" c1 c2 Greater;
@@ -284,27 +270,30 @@ let tests = [
   test_shuffle "shuffle 3 standard deck" s2 (of_deck d0);
   test_shuffle "shuffle d4" s4 (of_deck d8);
 
-  test_hand_value "Two pairs" l1 (TwoPairs (3, 2, [p12]));
-  test_hand_value "High Card" l2 (HighCard ([p14; p52; p9; p21; p46]));
-  test_hand_value "Full house" l3 (FullHouse (4, 6));
-  test_hand_value "Pair of J" l4 (Pair (11, [p40; p26; p8]));
-  test_hand_value "Two pairs" l5 (TwoPairs (10, 6, [p5]));
-  test_hand_value "High card" l6 (HighCard [p14; p52; p38; p49; p48]);
-  test_hand_value "Pair of 7" l7 (Pair (7, [p37; p34; p31]));
-  test_hand_value "Two pairs 3, K" l8 (TwoPairs (13, 3, [p27]));
-  test_hand_value "flush" l9 (Flush ([p40; p50; p45; p44; p41]));
-  test_hand_value "Three of a Kind (K)" l10 (ThreeOfAKind (13, [p1; p38]));
+  (** Poker tests are not done/fixed. *)
+  test_hand_value "Two pairs" l1 (TwoPairs (3, 2, l1'));
+  test_hand_value "High Card" l2 (HighCard l2');
+  test_hand_value "Full house" l3 (FullHouse (10, 7));
+  test_hand_value "Pair of 10" l4 (Pair (10, l4'));
+  test_hand_value "Two pairs" l5 (TwoPairs (10, 7, l5'));
+  test_hand_value "High card" l6 (HighCard l6');
+  test_hand_value "Pair of 7" l7 (Pair (7, l7'));
+  test_hand_value "Two pairs 10, K" l8 (TwoPairs (13, 10, l8'));
+  test_hand_value "flush" l9 (Flush l9');
+  test_hand_value "Three of a Kind (10)" l10 (ThreeOfAKind (10, l10'));
   test_hand_value "Royal Flush" l11 RoyalFlush;
-  test_hand_value "Straight Flush" l12 (StraightFlush [p13; p12; p11; p10; p9]);
-  test_hand_value "Straight" l13 (Straight [p49; p48; p34; p20; p19]);
-  test_hand_value "Four of a Kind" l14 (FourOfAKind (9, [p27]));
+  test_hand_value "Straight Flush" l12 (StraightFlush l12');
+  test_hand_value "Straight" l13 (Straight l13');
+  test_hand_value "Four of a Kind" l14 (FourOfAKind (9, l14'));
 
   test_cmp_hand "Straight > Two pairs" l13 l1 1;
   test_cmp_hand "Flush < Royal Flush" l9 l11 (-1);
-  test_cmp_hand "compare two high card, third card is different" l6 l2 1;
-  test_cmp_hand "compare two same high card" l6 l6 0;
-  test_cmp_hand "compare 2 two pairs, first pair is different" l1 l5 (-1);
+  test_cmp_hand "two high card" l6 l2 (-1);
+  test_cmp_hand "two same high card" l6 l6 0;
+  test_cmp_hand "2 two pairs, first pair is different" l1 l5 (-1);
   test_cmp_hand "compare pair, different pair" l4 l7 1;
+  test_cmp_hand "two Four of a kind, different rank of 4" l14 l15 (-1);
+  test_cmp_hand "two Four of a kind, different single card" l15 l16 (-1);
 ]
 
 let suite =
