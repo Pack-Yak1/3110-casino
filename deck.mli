@@ -104,8 +104,8 @@ val remainder : t -> t
     card), then [bj_score deck] is -1 to signify its unique value. *)
 val bj_score : t -> int
 
-(** [rank_of_pair cards] is the rank of first pair in [cards]. Return None is
-    thre is no pair in [cards] *)
+(** [rank_of_pair cards] is the rank of first pair in [cards]. Return None if
+    there is no pair in [cards] *)
 val rank_of_pair : t -> rank option
 
 (** [rank_filter r cards] is [cards] without card with rank [r]. *)
