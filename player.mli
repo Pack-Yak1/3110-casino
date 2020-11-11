@@ -16,3 +16,10 @@ val default_allowance : int
 val default_player : t
 
 val dealer : t
+
+(** [create_players n] is a player list with [n] players.
+    The name of each player is taken from std input. *)
+val create_players : int -> t list
+
+(** [print_score curr p] prints the score of player [p] in unit [curr] *)
+val print_score : string -> t -> unit

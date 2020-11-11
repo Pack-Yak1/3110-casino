@@ -71,7 +71,8 @@ let set_color player =
   player.style <- [Foreground clr]
 
 let view_rules player name =
-  List.assoc name rules |> print_string player.style
+  List.assoc name rules |> print_string player.style;
+  print_endline "\n"
 
 (*TODO: open statistics file and find player's data, then report all data on
   prompt. plays, quits, wins, money
