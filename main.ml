@@ -3,40 +3,9 @@ open Command
 open Blackjack
 open ANSITerminal
 open Tools
+open Player
 
-(** By default, all players have this amount when generated, except the 
-    dealer. *)
-let default_allowance = 100
-
-(** By default, the in-game currency is USD. *)
-let default_currency = "USD"
-
-(** The abstract type representing a player. [name] is the name of the player,
-    [hand] is the player's deck, [money] is the amount of money the player has 
-    remaining. *)
-type player = {
-  name : string;
-  mutable hand : Deck.t;
-  mutable bet : int;
-  mutable money : int;
-  mutable style : ANSITerminal.style list
-}
-
-let default_player = {
-  name = "";
-  hand = empty_deck ();
-  bet = 0;
-  money = default_allowance;
-  style = [Foreground Red]
-}
-
-let dealer = {
-  name = "dealer";
-  hand = empty_deck ();
-  bet = 0;
-  money = max_int;
-  style = []
-}
+type player = Player.t
 
 (** The abstract type representing a turn in a game. [name] is the name of the
     cardgame being played. [game_deck] is the main deck on the table from which
@@ -52,6 +21,9 @@ type game_state = {
   num_decks : int
 }
 
+(** By default, the in-game currency is USD. *)
+let default_currency = "USD"
+
 let default_game = {
   name = "";
   game_deck = empty_deck ();
@@ -65,30 +37,12 @@ let default_game = {
 (** List of names of supported games. *)
 let games = ["blackjack"; "poker"]
 
-(** Valid commands for each game. *)
-let blackjack_rules = "Rules\n Hit: Take another card from the dealer.\n \
-                       Stand: Take no more cards.\n Double down: Double your \
-                       bet and commit to standing after one more hit.\n Quit: \
-                       Quit the game.\n Tools: View or edit settings and \
-                       rules."
-(** TODO: Finish typing rules *)
-let poker_rules = "Rules\n Check: Decline to bet. You keep your hand but do \
-                   not open.\n 
-                   Stand: Take no more cards.\n Double down: Double your \
-                   bet and commit to standing after one more hit.\n Quit: \
-                   Quit the game.\n Tools: View or edit settings and \
-                   rules."
-let bridge_rules = "To be implemented"
-
-let rules = [
-  ("blackjack", blackjack_rules);
-  ("poker", poker_rules)
-]
 
 (* Begin ingame prompts: *)
 let input_prompt = "> "
 let welcome_msg = "\n\nWelcome to the 3110 Casino.\n"
-let game_seln_msg = "Please enter the name of the game you want to play.\n"
+let game_seln_msg = "Please enter the name of the game you want to play: \
+                     Blackjack, Poker, Bridge.\n"
 let no_such_game_msg = "You entered an invalid game name. Please try again.\n"
 let number_of_decks_msg = "Please enter the number of decks to play with. It \
                            must be a number greater than 0.\n"
@@ -288,7 +242,7 @@ let dealer_turn state =
 
 (** Prints the rules of the game with name [name] *)
 let print_rules name = 
-  List.assoc name rules |> print_endline 
+  Tools.view_rules name
 
 let bet_helper (player : player) = 
   let msg = bet_msg player.name in
@@ -326,7 +280,7 @@ let rec bj_turn s : game_state =
       | Stand -> bj_stand_protocol active_player s 
       | Double -> bj_double_protocol active_player s
       | Quit -> quit_protocol s
-      | Tools -> let _ = print_rules s.name in bj_turn s
+      | Tools -> Tools.show_menu s.name active_player; bj_turn s
     with
     | Invalid_command -> bj_invalid_protocol s
 
@@ -487,7 +441,8 @@ let main () =
 
   (* Select cardgame *)
   let s = choose_game () in
-  print_rules s.name;
+  Tools.view_rules Player.default_player s.name;
+  print_endline "\n";
 
   (* Determine if players can make initial bets, and if there is a dealer
        for the selected game mode, and the number of cards each player begins 
