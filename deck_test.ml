@@ -76,6 +76,47 @@ let test_shuffle name lst expected_output  =
       assert_equal expected_output ~cmp:cmp_lists
         (of_deck (shuffle lst)))
 
+let test_is_empty name lst expected_output  =
+  name >:: (fun _ -> 
+      assert_equal expected_output (is_empty lst))
+
+let test_cmp_high_cards name c1 c2 expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (c2 |> cmp_high_cards c1 |> int_to_cmp))
+
+let test_rev_sort name deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (rev_sort deck))
+
+let string_of_rank_op = function
+  | None -> "None"
+  | Some r -> string_of_int r
+
+let test_rank_of_pair name deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (rank_of_pair deck) 
+        ~printer: string_of_rank_op)
+
+let test_rank_filter name rank deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (rank_filter rank deck)
+        ~printer: string_of_deck)
+
+let test_flush name deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (flush deck)
+        ~printer: string_of_debug)
+
+let test_straight name deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (straight deck)
+        ~printer: string_of_debug)
+
+let test_straight_flush name deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (straight_flush deck)
+        ~printer: string_of_debug)
+
 let c1 = make_card S 2
 let c2 = make_card H 3
 let c3 = make_card C 4
@@ -140,8 +181,7 @@ let test_hand_value name deck expected_output  =
 
 let test_cmp_hand name c1 c2 expected_output  =
   name >:: (fun _ -> 
-      assert_equal expected_output (cmp_hand c1 c2)
-        ~printer: string_of_int)
+      assert_equal expected_output (c2 |> cmp_hand c1 |> int_to_cmp))
 
 let p1  = make_card S 14
 let p2  = make_card S 2
@@ -172,18 +212,24 @@ let p46 = make_card D 7
 let p48 = make_card D 9
 let p49 = make_card D 10
 
-
+(* S3, CJ, SQ, D3, S2, S10, D2 *)
 let l1 = make_deck [p3; p37; p12; p42; p2; p10; p41]
 let l1' = make_deck [p12]
+let l1_rev = make_deck [p12; p37; p10; p42; p3; p41; p2]
+let l1_filtered = make_deck [p3; p12; p42; p2; p10; p41]
+let l1_no_3 = make_deck [p37; p12; p2; p10; p41]
+(* S5, DA, HK, S2, H10, SJ, D6 *)
 let l2 = make_deck [p5; p40; p26; p2; p23; p11; p45]
 let l2' = make_deck [p40; p26; p11; p23; p45]
 let l3 = make_deck [p23; p49; p33; p46; p10; p11; p45]
 let l4 = make_deck [p30; p9; p46; p23; p11; p49; p45]
 let l4' = make_deck [p11; p9; p46]
+(* C4, S9, D7, H10, SJ, D10, C7*)
 let l5 = make_deck [p30; p9; p46; p23; p11; p49; p33]
 let l5' = make_deck [p11]
+(* HK, S8, S9, CJ, S4, H5, S2 *)
 let l6 = make_deck [p26; p8; p9; p37; p4; p18; p2]
-let l6' = make_deck [p26; p37; p48; p8; p18]
+let l6' = make_deck [p26; p37; p9; p8; p18]
 let l7 = make_deck [p5; p40; p33; p26; p2; p46; p10]
 let l7' = make_deck [p40; p26; p10]
 let l8 = make_deck [p4; p26; p49; p26; p23; p3; p27]
@@ -193,6 +239,7 @@ let l9' = make_deck [p10; p9; p5; p3; p2]
 let l10 = make_deck [p3; p10; p49; p30; p5; p23; p37]
 let l10' = make_deck [p37; p5]
 let l11 = make_deck [p1; p10; p12; p37; p42; p13; p11]
+let l11' = make_deck [p1; p13; p12; p11; p10]
 let l12 = make_deck [p3; p10; p12; p9; p42; p13; p11]
 let l12' = make_deck [p13; p12; p11; p10; p9]
 let l13 = make_deck [p3; p5; p45; p46; p11; p9; p30]
@@ -201,6 +248,11 @@ let l14 = make_deck [p22; p33; p48; p27; p35; p2; p9]
 let l14' = make_deck [p27]
 let l15 = make_deck [p1; p14; p40; p27; p35; p2; p9]
 let l16 = make_deck [p1; p14; p40; p27; p13; p2; p8]
+(* S3, CJ, CA, D3, S2, S10, D2 *)
+let l17 = make_deck [p3; p37; p27; p42; p2; p10; p41]
+let l18 = make_deck [p2; p1; p4; p5; p9; p10; p41]
+let l18' = make_deck [p1; p10; p9; p5; p4; p2]
+let l19 = make_deck [p1; p3; p4; p5; p8; p13; p12]
 
 let tests = [
   test_cmp_suit "spades > hearts" c1 c2 Greater;
@@ -270,7 +322,41 @@ let tests = [
   test_shuffle "shuffle 3 standard deck" s2 (of_deck d0);
   test_shuffle "shuffle d4" s4 (of_deck d8);
 
-  (** Poker tests are not done/fixed. *)
+  test_is_empty "empty deck" d5 true;
+  test_is_empty "non-empty deck" e10 false;
+  test_is_empty "non-empty deck" l1 false;
+
+  test_cmp_high_cards "two equal deck" l2 l2 Equal;
+  test_cmp_high_cards "first card is different" l2 l6 Lesser;
+  test_cmp_high_cards "third card is different" l17 l1 Greater;
+
+  test_rev_sort "empty deck" d5 d5;
+  test_rev_sort "nonempty deck" l1 l1_rev;
+
+  test_rank_of_pair "no pair" l2 None;
+  test_rank_of_pair "only one pair" (rev_sort l4) (Some 10);
+  test_rank_of_pair "two pairs" (rev_sort l5) (Some 10);
+  test_rank_of_pair "Four of a Kind" (rev_sort l14) (Some 9);
+
+  test_rank_filter "empty deck" 0 d5 d5;
+  test_rank_filter "nonexistent rank" 14 l1 l1;
+  test_rank_filter "only one card has target rank" 11 l1 l1_filtered; 
+  test_rank_filter "more than one card has target rank" 3 l1 l1_no_3; 
+
+  test_flush "no flush" l1 d5;
+  test_flush "5 cards flush" l9 l9';
+  test_flush "6 cards flush" l18 l18';
+  test_flush "7 cards flush" l19 (rev_sort l19);
+
+  test_straight "no straight" l1 d5;
+  test_straight "straight" l13 l13';
+
+  test_straight_flush "no straight or flush" l1 d5;
+  test_straight_flush "straight only" l13 d5;
+  test_straight_flush "flush only" l9 d5;
+  test_straight_flush "straight flush" l12 l12';
+  test_straight_flush "royal flush" l11 l11';
+
   test_hand_value "Two pairs" l1 (TwoPairs (3, 2, l1'));
   test_hand_value "High Card" l2 (HighCard l2');
   test_hand_value "Full house" l3 (FullHouse (10, 7));
@@ -286,14 +372,14 @@ let tests = [
   test_hand_value "Straight" l13 (Straight l13');
   test_hand_value "Four of a Kind" l14 (FourOfAKind (9, l14'));
 
-  test_cmp_hand "Straight > Two pairs" l13 l1 1;
-  test_cmp_hand "Flush < Royal Flush" l9 l11 (-1);
-  test_cmp_hand "two high card" l6 l2 (-1);
-  test_cmp_hand "two same high card" l6 l6 0;
-  test_cmp_hand "2 two pairs, first pair is different" l1 l5 (-1);
-  test_cmp_hand "compare pair, different pair" l4 l7 1;
-  test_cmp_hand "two Four of a kind, different rank of 4" l14 l15 (-1);
-  test_cmp_hand "two Four of a kind, different single card" l15 l16 (-1);
+  test_cmp_hand "Straight > Two pairs" l13 l1 Greater;
+  test_cmp_hand "Flush < Royal Flush" l9 l11 Lesser;
+  test_cmp_hand "two high card" l6 l2 Lesser;
+  test_cmp_hand "two same high card" l6 l6 Equal;
+  test_cmp_hand "2 two pairs, first pair is different" l1 l5 Lesser;
+  test_cmp_hand "compare pair, different pair" l4 l7 Greater;
+  test_cmp_hand "two Four of a kind, different rank of 4" l14 l15 Lesser;
+  test_cmp_hand "two Four of a kind, different single card" l15 l16 Lesser;
 ]
 
 let suite =
