@@ -1,6 +1,7 @@
 open Deck
 open Command
 open Blackjack
+open Poker
 open ANSITerminal
 open Tools
 
@@ -90,35 +91,44 @@ let input_prompt = "> "
 let welcome_msg = "\n\nWelcome to the 3110 Casino.\n"
 let game_seln_msg = "Please enter the name of the game you want to play.\n"
 let no_such_game_msg = "You entered an invalid game name. Please try again.\n"
+
 let number_of_decks_msg = "Please enter the number of decks to play with. It \
                            must be a number greater than 0.\n"
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
                      a number greater than 0.\n"
+
 let number_of_players_msg = "Please enter the number of players.\n"
 let invalid_p_msg = "You have entered an invalid number of players. Please \
                      enter a number greater than 0.\n"
-let invalid_command_msg = "You have entered an invalid command. Please try \
-                           again.\n"
+
 let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
                        greater than 0 and less than your limit.\n"
-let currency_msg = "Please enter your unit of currency.\n"
-let invalid_double_msg = "You do not have enough money to double."
-let no_entry_msg = "Please enter a number."
-let yes_or_no_prompt = "Do you wish to play another round? (y/n)"
-let yes_or_no_reminder = "Please enter either 'y' or 'n'.\n"
-let no_players_left_msg = "There are no players left in the game."
-let final_score_header = "\nFinal Scores:\n"
-let goodbye_msg = "Goodbye!"
-
 let bet_msg player_name =
   player_name ^  ", please enter how much you wish to bet.\n"
 
+let currency_msg = "Please enter your unit of currency.\n"
+
+let invalid_command_msg = "You have entered an invalid command. Please try \
+                           again.\n"
+let invalid_double_msg = "You do not have enough money to double."
+
+let no_entry_msg = "Please enter a number."
+
+let yes_or_no_prompt = "Do you wish to play another round? (y/n)"
+let response_yes = "y"
+let response_no = "n"
+let yes_or_no_reminder = "Please enter either 'y' or 'n'.\n"
+
+let no_players_left_msg = "There are no players left in the game."
 let elimination_msg name = 
   name ^ " is bankrupt and has been eliminated.\n"
 
 let print_score (player : player) = 
   let msg = player.name ^ " has $" ^ (string_of_int player.money) ^ "." in
   print_endline msg
+let final_score_header = "\nFinal Scores:\n"
+
+let goodbye_msg = "Goodbye!"
 
 (** [enter_name n] is a string prompt for the user to enter the [n]-th 
     player's name. *)
@@ -475,7 +485,8 @@ and replay () =
   print_endline yes_or_no_prompt;
   print_string [] input_prompt;
   let response = read_line () |> String.trim |> String.lowercase_ascii in
-  if response = "y" then true else if response = "n" then false
+  if response = response_yes then true 
+  else if response = response_no then false
   else begin 
     print_endline yes_or_no_reminder;
     replay ()
