@@ -33,6 +33,19 @@ let rec is_pair deck = match length deck with
     | None -> is_pair (remainder deck)
     | Some n -> Pair (n, rank_filter n deck)
 
+let house_helper r rem cards = function
+  | Pair (r', rem') when length rem' = 1 -> 
+    FourOfAKind (r', return (rank_filter r' cards) 1)
+  | Pair (r', rem') when length rem' = 2 -> 
+    FullHouse (r', r)
+  | Pair (r', rem') when length rem' = 3 -> begin 
+      match is_pair rem' with 
+      | Pair (r'', rem'') when length rem'' = 0 -> 
+        FullHouse (r'', r)
+      | _ -> TwoPairs (r, r', return rem' 1) 
+    end
+  | _ -> Pair (r, return rem 3) 
+
 let is_full_house deck =
   let cards = rev_sort deck in
   match is_pair cards with
@@ -46,19 +59,21 @@ let is_full_house deck =
         FullHouse (r, r')
       |  _ -> ThreeOfAKind (r, return rem 2)
     end
-  | Pair (r, rem) when length rem = 5 -> begin 
-      match is_pair rem with
-      | Pair (r', rem') when length rem' = 1 -> 
-        FourOfAKind (r', return (rank_filter r' cards) 1)
-      | Pair (r', rem') when length rem' = 2 -> FullHouse (r', r)
-      | Pair (r', rem') when length rem' = 3 -> begin 
-          match is_pair rem' with 
-          | Pair (r'', rem'') when length rem'' = 0 -> FullHouse (r'', r)
-          | _ -> TwoPairs (r, r', return rem' 1) 
-        end
-      | _ -> Pair (r, return rem 3) 
-    end
+  | Pair (r, rem) when length rem = 5 -> 
+    house_helper r rem cards (is_pair rem) 
   | _ -> HighCard (return cards 5) 
+
+let first deck = 
+  match pick deck 0 with 
+  | None -> failwith "impossible"
+  | Some c -> c 
+
+let sf_helper fl st_fl = function
+  | true -> Flush (return fl 5)
+  | false -> 
+    let c = first st_fl in 
+    if rank c = 14 then RoyalFlush 
+    else StraightFlush (return fl 5)
 
 let is_straight_flush deck = 
   let st = straight deck in
@@ -66,17 +81,8 @@ let is_straight_flush deck =
   match (is_empty st, is_empty fl) with
   | false, false -> begin 
       let st_fl = straight_flush deck in
-      match is_empty st_fl with 
-      | true -> Flush (return fl 5)
-      | false -> begin 
-          let c = begin 
-            match pick st_fl 0 with 
-            | None -> failwith "impossible"
-            | Some c -> c end 
-          in if rank c = 14 then RoyalFlush 
-          else StraightFlush (return fl 5)
-        end 
-    end 
+      sf_helper fl st_fl (is_empty st_fl)
+    end
   | true, false -> Flush fl
   | false, true -> Straight st
   | true, true -> let cards = rev_sort deck in 
@@ -114,21 +120,22 @@ let get_sec_rank = function
   | FullHouse (r1, r2) -> r2
   | _ -> 0
 
+let cmp_rank h1 h2 =
+  compare (get_rank h1) (get_rank h2)
+
+let cmp_sec_rank h1 h2 = 
+  compare (get_sec_rank h1) (get_sec_rank h2)
+
+let cmp_helper cmp1 cmp2 h1 h2 = 
+  let c = cmp1 h1 h2 in 
+  if c = 0 then cmp2 h1 h2 
+  else c 
+
 let cmp_hand c1 c2 = 
   let t1 = hand_value c1 in 
   let t2 = hand_value c2 in 
-  let c = cmp_type t1 t2 in 
-  if c = 0 then begin
-    let r1 = get_rank t1 in 
-    let r2 = get_rank t2 in
-    if r1 = r2 then begin
-      let r3 = get_sec_rank t1 in 
-      let r4 = get_sec_rank t2 in 
-      if r3 = r4 then begin
-        cmp_high_cards (get_cards t1) (get_cards t2) 
-      end
-      else compare r3 r4 
-    end
-    else compare r1 r2
-  end
+  let c = cmp_helper cmp_type cmp_rank t1 t2 in   
+  if c = 0 then 
+    cmp_high_cards (get_cards t1) (get_cards t2) 
   else c 
+
