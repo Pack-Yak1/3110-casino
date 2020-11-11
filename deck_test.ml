@@ -105,17 +105,17 @@ let test_rank_filter name rank deck expected_output =
 let test_flush name deck expected_output = 
   name >:: (fun _ -> 
       assert_equal expected_output (flush deck)
-        ~printer: string_of_debug)
+        ~printer: string_of_deck)
 
 let test_straight name deck expected_output = 
   name >:: (fun _ -> 
       assert_equal expected_output (straight deck)
-        ~printer: string_of_debug)
+        ~printer: string_of_deck)
 
 let test_straight_flush name deck expected_output = 
   name >:: (fun _ -> 
       assert_equal expected_output (straight_flush deck)
-        ~printer: string_of_debug)
+        ~printer: string_of_deck)
 
 let c1 = make_card S 2
 let c2 = make_card H 3
