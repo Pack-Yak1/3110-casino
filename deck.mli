@@ -105,7 +105,8 @@ val remainder : t -> t
 val bj_score : t -> int
 
 (** [rank_of_pair cards] is the rank of first pair in [cards]. Return None if
-    there is no pair in [cards] *)
+    there is no pair in [cards] 
+    Requires: [cards] must be sorted on rank. *)
 val rank_of_pair : t -> rank option
 
 (** [rank_filter r cards] is [cards] without card with rank [r]. *)
@@ -116,10 +117,13 @@ val rank_filter : rank -> t -> t
     Requires: [cards] must contain exactly seven cards. *)
 val flush : t -> t
 
-(** [straigth cards] is five cards in [cards] with consecutive rank value. *)
+(** [straigth cards] is five cards in [cards] with greatest consecutive rank 
+    value.
+    Requires: [cards] must contain exactly seven cards. *)
 val straight : t -> t
 
-(** [straigth cards] is cards in [cards] that is both flush and straight. *)
+(** [straigth cards] is cards in [cards] that is both flush and straight.
+    Requires: [cards] must contain exactly seven cards. *)
 val straight_flush : t -> t
 
 (** [concat d1 d2] is a deck containing all cards in d1 and d2. Repeated cards
