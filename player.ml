@@ -55,6 +55,6 @@ let create_players n =
 
 
 let print_score (curr : string) (player : t) = 
-  let msg = player.name ^ " has " ^ (string_of_int player.money) ^ " "
+  let msg = player.name ^ " has $" ^ (string_of_int player.money) ^ " "
             ^ curr ^ "." in
   print_endline msg

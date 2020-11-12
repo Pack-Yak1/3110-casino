@@ -22,8 +22,13 @@ val default_currency : string
     equal to [p]. *)
 val update_players : int -> player list -> t -> t
 
+(** Plays a game of poker and returns a game_state with the results of the
+    game applieed. *)
+val poker_turn : t -> t
+
 (** Determines whose turn it is, then prompts and takes a command. Recurses
-    to automatically begin the next action. *)
+    to automatically begin the next action. Returns a game_state with the 
+    results of the blackjack game applied. *)
 val bj_turn : t -> t
 
 (** [choose_game] is a game state with an empty deck, 1 player and game 

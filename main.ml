@@ -17,11 +17,6 @@ let input_prompt = "> "
 let welcome_msg = "\n\nWelcome to the 3110 Casino.\n"
 (* End ingame prompts *)
 
-
-(** TODO: Implement a function that runs a single game of Texas holdem *)
-let poker_turn s = 
-  failwith "unimplemented"
-
 (** The abstract type representing meta game information for a given gamemode,
     which includes whether you are allowed to bet before cards are dealt, and
     if there exists a dealer, and the number of cards each player is dealt 
@@ -35,17 +30,17 @@ type game_info = {
 }
 
 let bj_info = {
-  init_bet = true;
-  has_dealer = true;
+  init_bet = Blackjack.init_bet;
+  has_dealer = Blackjack.has_dealer;
   initial_cards = Blackjack.initial_cards;
   engine = Gamestate.bj_turn;
 }
 
 let poker_info = {
-  init_bet = false;
-  has_dealer = false;
+  init_bet = Poker.init_bet;
+  has_dealer = Poker.has_dealer;
   initial_cards = Poker.initial_cards;
-  engine = poker_turn
+  engine = Gamestate.poker_turn
 }
 
 (** [info str] returns the [game_info] associated with the game name, [str]. 

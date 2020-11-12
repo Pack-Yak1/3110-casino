@@ -2,6 +2,10 @@ open Deck
 
 let initial_cards = 2
 
+let init_bet = false
+
+let has_dealer = false
+
 type hand =
   | HighCard of Deck.t
   | Pair of rank * Deck.t

@@ -221,6 +221,9 @@ let quit_protocol state =
   print_endline goodbye_msg;
   exit 0
 
+(** TODO: Implement a function that runs a single game of Texas holdem *)
+let poker_turn s = 
+  failwith "unimplemented"
 
 let rec bj_turn s : t =
   let active_player_index = s.turn in
