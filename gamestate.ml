@@ -131,6 +131,10 @@ let print_hand state index =
 
 
 let start_turn state player = 
+  if length state.flop.hand > 0 then begin
+    let flop_msg = "The flop is: " ^ (state.flop.hand |> string_of_deck) in
+    print_endline flop_msg;
+  end else ();
   player |> turn_msg state |> print_endline;
   print_hand state player;
   print_string ((List.nth state.players player).style) input_prompt
@@ -254,20 +258,25 @@ let all_bets_matched state =
   | h :: t -> all_bets_matched_helper t h.bet true
 
 let rec take_poker_command state = 
-  let player_index = state.turn mod state.player_num in
-  let p = List.nth state.players player_index in
-  if p.in_game = false then {state with turn = state.turn + 1}
+  if remaining_players state = 0 then state
+  else if all_maxed_bets state then state
+  else if all_bets_matched state && state.turn > 0 then state
   else begin 
-    start_turn state player_index;
-    try match read_line() |> parse_p with
-      | Check -> p_check_protocol p state
-      | Raise -> p_raise_protocol p state
-      | Call -> p_call_protocol p state
-      | Fold -> p_fold_protocol p state
-      | Quit -> quit_protocol state
-      | Tools -> Tools.show_menu state.name p; take_poker_command state
-    with 
-    | Invalid_command -> invalid_protocol take_poker_command state
+    let player_index = state.turn mod state.player_num in
+    let p = List.nth state.players player_index in
+    if p.in_game = false then {state with turn = state.turn + 1}
+    else begin 
+      start_turn state player_index;
+      try match read_line() |> parse_p with
+        | Check -> p_check_protocol p state
+        | Raise -> p_raise_protocol p state
+        | Call -> p_call_protocol p state
+        | Fold -> p_fold_protocol p state
+        | Quit -> quit_protocol state
+        | Tools -> Tools.show_menu state.name p; take_poker_command state
+      with 
+      | Invalid_command -> invalid_protocol take_poker_command state
+    end
   end
 
 and p_check_protocol player state = 
@@ -296,17 +305,30 @@ and p_call_protocol player state =
 and p_fold_protocol player state = 
   failwith "gg"
 
-let bet_round state = 
-  if remaining_players state = 0 then state
-  else if all_maxed_bets state then state
-  else if all_bets_matched state && state.turn > 0 then state
-  else take_poker_command state
-
 (** TODO: Implement a function that runs a single game of Texas holdem *)
 let poker_turn s = 
-  let pre_flop_state = bet_round s in
+  (* 1st betting round *)
+  let pre_flop_state = take_poker_command s in
+  (* Check at least 2 players remaining *)
   if remaining_players pre_flop_state < 2 then pre_flop_state
-  else failwith "gg"
+  else begin 
+    deal_n 3 s s.flop;
+    (* 2nd betting round, reset turn to 0 first *)
+    let reset_state = {pre_flop_state with turn = 0} in
+    let pre_4th_street_state = take_poker_command reset_state in
+    if remaining_players pre_4th_street_state < 2 then pre_4th_street_state
+    else begin
+      (* 3rd betting round, reset turn to 0 first *)
+      let reset_state = {pre_4th_street_state with turn = 0} in
+      let pre_river_state = take_poker_command reset_state in
+      if remaining_players pre_river_state < 2 then pre_river_state
+      else begin 
+        (* 4th and final betting round, reset to 0 first *)
+        let reset_state = {pre_river_state with turn = 0} in
+        take_poker_command reset_state
+      end
+    end
+  end
 
 
 let rec bj_turn s : t =
