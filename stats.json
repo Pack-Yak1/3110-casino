@@ -1,0 +1,10 @@
+{
+  "players": [
+    {
+      "name": "default_player",
+      "money": "10000 USD",
+      "plays": 20000
+    }
+  ],
+  "Total games played": 0
+}
