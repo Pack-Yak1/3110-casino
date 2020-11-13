@@ -1,2 +1,1 @@
-true: package(ounit2)
-true: package(ANSITerminal)
+true: package(ounit2),package(ANSITerminal),package(yojson)

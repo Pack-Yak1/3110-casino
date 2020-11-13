@@ -2,9 +2,9 @@ MODULES=deck command main blackjack authors tools poker player gamestate
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)
-TEST=deck_test.byte
+TEST=test.byte
 MAIN=main.byte
-OCAMLBUILD=ocamlbuild -use-ocamlfind
+OCAMLBUILD=ocamlbuild -use-ocamlfind -pkg yojson
 
 default: build
 	utop
@@ -20,7 +20,7 @@ test:
 
 docs: build
 	mkdir -p doc.private
-	ocamlfind ocamldoc -I _build -package yojson,ANSITerminal \
+	ocamlfind ocamldoc -I _build -package ANSITerminal\
 		-html -stars -d doc.private \
 		-inv-merge-ml-mli -m A $(MLIS) $(MLS)
 

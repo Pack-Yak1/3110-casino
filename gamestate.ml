@@ -164,8 +164,8 @@ let bj_showdown state =
   let scores = List.map (fun p -> bj_score p.hand) state.players in
   List.map (win_check outcome) scores
 
-(** [pay_player state win n p] pays [p] with index [n] if they win, given by
-    [win], or charges them if they do not win, and prints the result of
+(** [pay_player state win n p] pays [p] with 0-based index [n] if they win,
+    given by [win], or charges them if they do not win, and prints the result of
     whether they win/lose and their remaining money, in [state] *)
 let pay_player state win n p =
   let player_n = "Player " ^ string_of_int (n + 1) in
@@ -369,6 +369,8 @@ let display_final_scores state =
   let lst = state.players in
   List.iter (Player.print_score state.currency) lst
 
+(** [eliminate_player player] is [true] if the player is not eliminated.
+    If the player is eliminated, it is [false]. *)
 let eliminate_player player =
   if player.money > 0 then true
   else begin
@@ -382,6 +384,17 @@ let eliminate_bankrupts state =
   let lst = state.players in
   let new_players = List.filter eliminate_player lst in
   { state with players = new_players; player_num = List.length new_players}
+
+(** Prompts for a yes or no response to whether another round is desired. *)
+let rec replay () = 
+  print_endline yes_or_no_prompt;
+  print_string [] input_prompt;
+  let response = read_line () |> String.trim |> String.lowercase_ascii in
+  if response = "y" then true else if response = "n" then false
+  else begin 
+    print_endline yes_or_no_reminder;
+    replay ()
+  end
 
 let rec play_round init_bet has_dealer starting_cards state turn =
   (* Check if there are still any eligible players remaining. *)
@@ -406,14 +419,3 @@ let rec play_round init_bet has_dealer starting_cards state turn =
       let next_state = eliminate_bankrupts final_state in
       play_round init_bet has_dealer starting_cards next_state turn 
     end else display_final_scores final_state
-
-(** Prompts for a yes or no response to whether another round is desired. *)
-and replay () = 
-  print_endline yes_or_no_prompt;
-  print_string [] input_prompt;
-  let response = read_line () |> String.trim |> String.lowercase_ascii in
-  if response = "y" then true else if response = "n" then false
-  else begin 
-    print_endline yes_or_no_reminder;
-    replay ()
-  end

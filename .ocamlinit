@@ -1,5 +1,6 @@
 #require "ounit2";;
 #require "ANSITerminal";;
+#require "yojson";;
 #directory "_build";;
 #load_rec "deck.cmo";;
 #load_rec "command.cmo";;
