@@ -11,6 +11,7 @@ type t = {
   player_num : int;
   turn : int;
   mutable players : player list;
+  mutable pot: int;
   currency : string;
   num_decks : int
 }

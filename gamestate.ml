@@ -13,6 +13,7 @@ type t = {
   player_num : int;
   turn : int;
   mutable players : player list;
+  mutable pot : int;
   currency : string;
   num_decks : int
 }
@@ -28,6 +29,7 @@ let default_game = {
   player_num = 0;
   turn = 0;
   players = [];
+  pot = 0;
   currency = default_currency;
   num_decks = 0;
 }
@@ -52,6 +54,8 @@ let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
 let invalid_double_msg = "You do not have enough money to double."
 let invalid_command_msg = "You have entered an invalid command. Please try \
                            again.\n"
+let invalid_check_msg = "A player has already opened the betting round. You \
+                         may no longer check."
 (** [turn_msg n] is a string prompt for the [n-th] user to enter their
     command. *)
 let turn_msg (state : t) n = 
@@ -269,7 +273,13 @@ let rec take_poker_command state =
   end
 
 and p_check_protocol player state = 
-  failwith "gg"
+  let nonzero_bet_players = List.filter (fun p -> p.bet <> 0) state.players in
+  let check_allowed = List.length nonzero_bet_players = 0 in
+  if check_allowed then {state with turn = state.turn + 1} 
+  else begin
+    print_endline invalid_check_msg;
+    take_poker_command state
+  end
 
 and p_raise_protocol player state = 
   failwith "gg"
@@ -283,7 +293,7 @@ and p_fold_protocol player state =
 let bet_round state = 
   if all_folded state then state
   else if all_maxed_bets state then state
-  else if all_bets_matched state then state
+  else if all_bets_matched state && state.turn > 0 then state
   else take_poker_command state
 
 (** TODO: Implement a function that runs a single game of Texas holdem *)
