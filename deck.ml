@@ -110,19 +110,29 @@ let rec return (cards : t) (n : int ) : t =
       | h :: t -> (n - 1 |> return t |> append) h
     end
 
-(** [bj_rank acc card] is the rank of the card unless it is a) a face card, in
-    which case it is 10, or b) an ace, in which case it is 11, unless that 
-    causes the player's score to exceed 21, in which case it returns 1. *)
-let bj_rank acc ((s, r) : card) = 
+(** [bj_rank card] is the rank of the card unless it is a) a face card, in
+    which case it is 10, or b) an ace, in which case it raises an exception *)
+let bj_rank ((s, r) : card) = 
   if r < a_rank then r |> min 10
-  else if acc > 10 then 1
-  else 11
+  else failwith "Cannot rank ace without all aces"
+
+(** [bj_score_under_21 sum n] is the maximum score of a hand containing
+    non-ace cards with a sum of [sum] and [n] aces, counting each ace as
+    11 unless it causes the player's score to exceed 21, in which case
+    it counts as 1. *)
+let bj_score_under_21 sum n =
+  let all_1_score = n + sum in
+  if all_1_score <= 11 && n >= 1 then all_1_score + 10 else all_1_score
 
 let bj_score deck = 
   let d = sort deck in
-  let sum = List.fold_left (fun acc card -> acc + bj_rank acc card) 0 d in
-  let nat_bj = length deck = 2 && sum = 21 in
-  if nat_bj then -1 else sum
+  let (sum, aces) = List.fold_left
+      (fun (not_ace_sum, n_aces) card -> if snd card <> 14
+        then (not_ace_sum + bj_rank card, 0)
+        else (not_ace_sum, n_aces + 1)) (0, 0) d in
+  let aced_sum = bj_score_under_21 sum aces in
+  let nat_bj = length deck = 2 && aced_sum = 21 in
+  if nat_bj then -1 else aced_sum
 
 let rec rank_of_pair = function
   | [] | [_] -> None

@@ -67,14 +67,14 @@ let main () =
   let init_bet = game_info.init_bet
   and has_dealer = game_info.has_dealer 
   and starting_cards = game_info.initial_cards 
-  and turn = game_info.engine in
+  and engine = game_info.engine in
 
   (* Creates a game state with number of decks, number of players, player names 
      and initial bets (if the game mode permits) *)
   let state = Gamestate.shared_init s init_bet has_dealer starting_cards in
 
   (* Begins the match loop *)
-  Gamestate.play_round init_bet has_dealer starting_cards state turn
+  Gamestate.play_round init_bet has_dealer starting_cards state engine
 
 (* Execute the game engine. *)
 let () = main ()

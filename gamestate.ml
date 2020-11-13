@@ -162,8 +162,8 @@ let bj_showdown state =
   let scores = List.map (fun p -> bj_score p.hand) state.players in
   List.map (win_check outcome) scores
 
-(** [pay_player state win n p] pays [p] with index [n] if they win, given by
-    [win], or charges them if they do not win, and prints the result of
+(** [pay_player state win n p] pays [p] with 0-based index [n] if they win,
+    given by [win], or charges them if they do not win, and prints the result of
     whether they win/lose and their remaining money, in [state] *)
 let pay_player state win n p =
   let player_n = "Player " ^ string_of_int (n + 1) in
@@ -190,7 +190,7 @@ let payout state player_outcomes =
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
 let bj_dealer_turn state = 
   while bj_score dealer.hand < 17 do
-    deal dealer state;
+    print_endline (dealer.hand|> string_of_deck); print_int (bj_score dealer.hand); deal dealer state; print_endline "dealt a card"; print_int (bj_score dealer.hand); print_endline "dealer score"
   done;
   print_string [] "Dealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
@@ -307,6 +307,8 @@ let display_final_scores state =
   let lst = state.players in
   List.iter (Player.print_score state.currency) lst
 
+(** [eliminate_player player] is [true] if the player is not eliminated.
+    If the player is eliminated, it is [false]. *)
 let eliminate_player player =
   if player.money > 0 then true
   else begin
