@@ -29,6 +29,15 @@ let dealer = {
   style = []
 }
 
+let flop = {
+  name = "flop";
+  hand = empty_deck ();
+  bet = 0;
+  money = 0;
+  in_game = true;
+  style = [];
+}
+
 let input_prompt = "> "
 
 (** [enter_name n] is a string prompt for the user to enter the [n]-th 

@@ -9,11 +9,10 @@ type player = Player.t
 type t = {
   name : string;
   mutable game_deck : Deck.t;
-  mutable flop : Deck.t;
+  mutable flop : player;
   player_num : int;
   turn : int;
   mutable players : player list;
-  mutable pot : int;
   currency : string;
   num_decks : int
 }
@@ -25,11 +24,10 @@ let currency_msg = "Please enter your unit of currency.\n"
 let default_game = {
   name = "";
   game_deck = empty_deck ();
-  flop = empty_deck ();
+  flop = Player.flop;
   player_num = 0;
   turn = 0;
   players = [];
-  pot = 0;
   currency = default_currency;
   num_decks = 0;
 }
@@ -231,10 +229,10 @@ and invalid_protocol (engine : t -> t) (state : t) : t =
   print_endline invalid_command_msg;
   engine state 
 
-let all_folded state = 
+let remaining_players state = 
   let remaining_players = List.filter (fun p -> 
       p.in_game = true) state.players in
-  List.length remaining_players = 0
+  List.length remaining_players
 
 let all_maxed_bets state = 
   let non_maxed_players = List.filter (fun p -> 
@@ -285,20 +283,31 @@ and p_raise_protocol player state =
   failwith "gg"
 
 and p_call_protocol player state = 
-  failwith "gg"
+  let previous_player_index = state.turn - 1 mod state.player_num in
+  let previous_player = List.nth state.players previous_player_index in
+  if previous_player.bet <= player.money then begin 
+    player.bet <- previous_player.bet;
+    {state with turn = state.turn + 1}
+  end else begin 
+    print_endline "You do not have enough money to call";
+    take_poker_command state
+  end
 
 and p_fold_protocol player state = 
   failwith "gg"
 
 let bet_round state = 
-  if all_folded state then state
+  if remaining_players state = 0 then state
   else if all_maxed_bets state then state
   else if all_bets_matched state && state.turn > 0 then state
   else take_poker_command state
 
 (** TODO: Implement a function that runs a single game of Texas holdem *)
 let poker_turn s = 
-  bet_round s
+  let pre_flop_state = bet_round s in
+  if remaining_players pre_flop_state < 2 then pre_flop_state
+  else failwith "gg"
+
 
 let rec bj_turn s : t =
   let active_player_index = s.turn in
@@ -368,7 +377,7 @@ let refresh_state state init_bet =
   dealer.hand <- empty_deck ();
   wipe_hands state;
   state.game_deck <- n_std_decks state.num_decks |> shuffle;
-  state.flop <- empty_deck ();
+  state.flop.hand <- empty_deck ();
   if init_bet then begin 
     let new_players = assign_bets state.player_num state in
     { state with turn = 0; players = new_players }

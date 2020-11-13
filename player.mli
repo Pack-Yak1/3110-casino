@@ -18,6 +18,8 @@ val default_player : t
 
 val dealer : t
 
+val flop : t
+
 (** [create_players n] is a player list with [n] players.
     The name of each player is taken from std input. *)
 val create_players : int -> t list
