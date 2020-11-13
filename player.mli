@@ -6,6 +6,7 @@ type t = {
   mutable hand : Deck.t;
   mutable bet : int;
   mutable money : int;
+  mutable in_game : bool;
   mutable style : ANSITerminal.style list
 }
 

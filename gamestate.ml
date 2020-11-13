@@ -9,6 +9,7 @@ type player = Player.t
 type t = {
   name : string;
   mutable game_deck : Deck.t;
+  mutable flop : Deck.t;
   player_num : int;
   turn : int;
   mutable players : player list;
@@ -23,6 +24,7 @@ let currency_msg = "Please enter your unit of currency.\n"
 let default_game = {
   name = "";
   game_deck = empty_deck ();
+  flop = empty_deck ();
   player_num = 0;
   turn = 0;
   players = [];
@@ -221,9 +223,72 @@ let quit_protocol state =
   print_endline goodbye_msg;
   exit 0
 
+and invalid_protocol (engine : t -> t) (state : t) : t = 
+  print_endline invalid_command_msg;
+  engine state 
+
+let all_folded state = 
+  let remaining_players = List.filter (fun p -> 
+      p.in_game = true) state.players in
+  List.length remaining_players = 0
+
+let all_maxed_bets state = 
+  let non_maxed_players = List.filter (fun p -> 
+      p.bet = p.money) state.players in
+  List.length non_maxed_players = 0
+
+let rec all_bets_matched_helper lst bet acc = 
+  match lst with
+  | [] -> true
+  | h :: t -> begin
+      let bets_match = h.bet = bet in
+      if bets_match then all_bets_matched_helper t bet (acc && bets_match)
+      else false
+    end
+
+let all_bets_matched state = 
+  match state.players with
+  | [] -> true
+  | h :: t -> all_bets_matched_helper t h.bet true
+
+let rec take_poker_command state = 
+  let player_index = state.turn mod state.player_num in
+  let p = List.nth state.players player_index in
+  if p.in_game = false then {state with turn = state.turn + 1}
+  else begin 
+    start_turn state player_index;
+    try match read_line() |> parse_p with
+      | Check -> p_check_protocol p state
+      | Raise -> p_raise_protocol p state
+      | Call -> p_call_protocol p state
+      | Fold -> p_fold_protocol p state
+      | Quit -> quit_protocol state
+      | Tools -> Tools.show_menu state.name p; take_poker_command state
+    with 
+    | Invalid_command -> invalid_protocol take_poker_command state
+  end
+
+and p_check_protocol player state = 
+  failwith "gg"
+
+and p_raise_protocol player state = 
+  failwith "gg"
+
+and p_call_protocol player state = 
+  failwith "gg"
+
+and p_fold_protocol player state = 
+  failwith "gg"
+
+let bet_round state = 
+  if all_folded state then state
+  else if all_maxed_bets state then state
+  else if all_bets_matched state then state
+  else take_poker_command state
+
 (** TODO: Implement a function that runs a single game of Texas holdem *)
 let poker_turn s = 
-  failwith "unimplemented"
+  bet_round s
 
 let rec bj_turn s : t =
   let active_player_index = s.turn in
@@ -238,11 +303,7 @@ let rec bj_turn s : t =
       | Quit -> quit_protocol s
       | Tools -> Tools.show_menu s.name active_player; bj_turn s
     with
-    | Invalid_command -> bj_invalid_protocol s
-
-and bj_invalid_protocol state = 
-  print_endline invalid_command_msg;
-  bj_turn state 
+    | Invalid_command -> invalid_protocol bj_turn s
 
 and bj_hit_protocol player state = 
   deal player state;
@@ -297,6 +358,7 @@ let refresh_state state init_bet =
   dealer.hand <- empty_deck ();
   wipe_hands state;
   state.game_deck <- n_std_decks state.num_decks |> shuffle;
+  state.flop <- empty_deck ();
   if init_bet then begin 
     let new_players = assign_bets state.player_num state in
     { state with turn = 0; players = new_players }

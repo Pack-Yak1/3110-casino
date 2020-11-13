@@ -5,7 +5,8 @@ type t = {
   mutable hand : Deck.t;
   mutable bet : int;
   mutable money : int;
-  mutable style : ANSITerminal.style list
+  mutable in_game : bool;
+  mutable style : ANSITerminal.style list;
 }
 
 let default_allowance = 100
@@ -15,6 +16,7 @@ let default_player = {
   hand = empty_deck ();
   bet = 0;
   money = default_allowance;
+  in_game = true;
   style = []
 }
 
@@ -23,6 +25,7 @@ let dealer = {
   hand = empty_deck ();
   bet = 0;
   money = max_int;
+  in_game = true;
   style = []
 }
 

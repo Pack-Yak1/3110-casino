@@ -7,6 +7,7 @@ type player = Player.t
 type t = {
   name : string;
   mutable game_deck : Deck.t;
+  mutable flop : Deck.t;
   player_num : int;
   turn : int;
   mutable players : player list;
