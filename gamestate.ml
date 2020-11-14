@@ -393,7 +393,7 @@ and p_raise_protocol player state =
         invalid_bet_msg 0 false in
     let can_bet = player.money - player.bet in
     if bet > can_bet then begin
-      bet_over_rem_msg ^ (string_of_int can_bet) ^ "\n"
+      bet_over_rem_msg ^ (string_of_int can_bet) ^ " more.\n"
       |> print_string player.style;
       p_raise_protocol player state
     end else begin
