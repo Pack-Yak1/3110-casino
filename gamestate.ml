@@ -175,19 +175,20 @@ let bj_showdown state =
   let scores = List.map (fun p -> bj_score p.hand) state.players in
   List.map (win_check outcome) scores
 
-(** [pay_player curr win win_msg loss_msg n p] pays [p] with 0-based index [n]
+(** [pay_player curr win win_msg loss_msg p] pays [p] with name [name]
     if they win, given by [win], or charges them if they do not win, and prints
     the result of whether they win/lose (with [win_msg] or [loss_msg],
     respectively) and their remaining money, in [state] *)
-let pay_player curr win win_msg loss_msg n p =
-  let player_n = "Player " ^ string_of_int (n + 1) in
+let pay_player curr win win_msg loss_msg name p =
   if win then begin
     p.money <- p.bet + p.money;
-    player_n ^ " " ^ win_msg ^ " and has " ^ string_of_int p.money
+    p.bet <- 0;
+    name ^ " " ^ win_msg ^ " and has " ^ string_of_int p.money
     ^ " " ^ curr ^ " total." |> print_endline;
   end else begin
     p.money <- p.money - p.bet;
-    player_n ^ " " ^ loss_msg ^ " and has "  ^ string_of_int p.money
+    p.bet <- 0;
+    name ^ " " ^ loss_msg ^ " and has "  ^ string_of_int p.money
     ^ " " ^ curr ^ " total."|> print_endline;
   end
 
@@ -199,8 +200,9 @@ let pay_player curr win win_msg loss_msg n p =
 let payout state win_msg loss_msg player_outcomes =
   let players = state.players in
   for i = 0 to state.player_num - 1 do
+    let player = List.nth players i in
     pay_player state.currency (List.nth player_outcomes i) win_msg loss_msg
-      i (List.nth players i)
+      player.name player
   done; state
 
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
@@ -402,6 +404,8 @@ and p_call_protocol player state =
   let previous_player = previous_in_player player state in
   if previous_player.bet <= player.money then begin 
     player.bet <- previous_player.bet;
+    "You currently have " ^ string_of_int player.bet ^ " bet.\n"
+    |> print_string player.style;
     take_poker_command {state with turn = state.turn + 1}
   end else begin 
     print_endline "You do not have enough money to call";
@@ -412,44 +416,75 @@ and p_call_protocol player state =
 and p_fold_protocol player state =
   player.in_game <- false;
   pay_player state.currency false "fold never wins" "folded"
-    (state.turn mod state.player_num) player;
+    player.name player;
   take_poker_command {state with turn = state.turn + 1}
 
-(** TODO *)
+(** [p_winners players s] is a list of winners in remaining [players] at the 
+    end of a game of poker in [s]. *)
+let p_winners players s =
+  if List.length players = 1 then players
+  else let hi_lo_sorted_p =
+         List.map (fun p -> (p, Deck.concat p.hand s.flop.hand)) players
+         |> List.sort (fun (_, h1) (_, h2) -> -(Poker.cmp_hand h1 h2)) in
+    let rec top_n lst acc =
+      match lst with
+      | [] -> failwith "cannot have 0 players"
+      | [(p, h)] -> p :: acc
+      | (p1, h1) :: (p2, h2) :: t ->
+        if Poker.cmp_hand h1 h2 = 0 then top_n ((p2, h2) :: t) (p1 :: acc)
+        else p1 :: acc in
+    top_n hi_lo_sorted_p []
+
+(** [p_showdown s] pays the winning players in end of game [s] and charges
+    the losing players*)
 let p_showdown s =
   let remaining_players = List.filter (fun p -> p.in_game) s.players in
-  let payout p =
-    if not p.in_game then
-      pay_player s.currency p.in_game "lost, not printed" "lost" 10000 p in
-  List.iter payout s.players
+  let winners = p_winners remaining_players s in
+  let total_bet = List.fold_left (fun acc p -> p.bet + acc) 0 s.players in
+  let payment = total_bet / (List.length winners) in
+  for i = 0 to s.player_num - 1 do
+    let player = List.nth s.players i in
+    let is_winner_i = List.mem player winners in
+    if not is_winner_i then
+      pay_player s.currency false "did not win, not printed" "lost"
+        player.name player
+    else begin player.money <- player.money + payment;
+      player.bet <- 0;
+      player.name ^ " won and has " ^ string_of_int player.money
+      ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
+    end done; s
 
-let poker_turn s = 
-  (* 1st betting round *)
-  print_endline "\nPre-flop round\n";
-  let pre_flop_state = take_poker_command s in
-  (* Check at least 2 players remaining *)
-  if remaining_players pre_flop_state < 2 then pre_flop_state
-  else begin 
-    deal_n 3 s s.flop;
-    (* 2nd betting round, reset turn to 0 first *)
-    let reset_state = {pre_flop_state with turn = 0} in
-    print_endline "\nFlop round\n";
-    let flop_state = take_poker_command reset_state in
-    if remaining_players flop_state < 2 then flop_state
-    else begin
-      (* 3rd betting round, reset turn to 0 first *)
-      let reset_state = {flop_state with turn = 0} in
-      print_endline "\nTurn round\n";
-      let turn_state = take_poker_command reset_state in
-      if remaining_players turn_state < 2 then turn_state
-      else begin 
-        (* 4th and final betting round, reset to 0 first *)
-        print_endline "\nRiver round";
-        let reset_state = {turn_state with turn = 0} in
-        take_poker_command reset_state
+let poker_turn s =
+  let p_game s =
+    (* 1st betting round *)
+    print_endline "\nPre-flop round\n";
+    let pre_flop_state = take_poker_command s in
+    (* Check at least 2 players remaining *)
+    if remaining_players pre_flop_state < 2 then pre_flop_state
+    else begin 
+      deal_n 3 s s.flop;
+      (* 2nd betting round, reset turn to 0 first *)
+      let reset_state = {pre_flop_state with turn = 0} in
+      print_endline "\nFlop round\n";
+      let flop_state = take_poker_command reset_state in
+      if remaining_players flop_state < 2 then flop_state
+      else begin
+        deal_n 1 flop_state flop_state.flop;
+        (* 3rd betting round, reset turn to 0 first *)
+        let reset_state = {flop_state with turn = 0} in
+        print_endline "\nTurn round\n";
+        let turn_state = take_poker_command reset_state in
+        if remaining_players turn_state < 2 then turn_state
+        else begin
+          deal_n 1 turn_state turn_state.flop;
+          (* 4th and final betting round, reset to 0 first *)
+          print_endline "\nRiver round";
+          let reset_state = {turn_state with turn = 0} in
+          take_poker_command reset_state
+        end
       end
-    end
-  end
+    end in
+  p_game s |> p_showdown
 
 (** [update_currency s] is [s] with unit of currency equal to the
     entered string. *)
