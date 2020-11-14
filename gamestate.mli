@@ -2,8 +2,9 @@ type player = Player.t
 
 (** The abstract type representing a turn in a game. [name] is the name of the
     cardgame being played. [game_deck] is the main deck on the table from which
-    players must draw. [turn] is the 0-index of the current player in 
-    [players] to play. [player_num] is the number of players in the game. *)
+    players must draw. [turn] is the 0-index of the turn in the game, which
+    increments with each player's turn (skipped players' turns are counted).
+    [player_num] is the number of players in the game. *)
 type t = {
   name : string;
   mutable game_deck : Deck.t;

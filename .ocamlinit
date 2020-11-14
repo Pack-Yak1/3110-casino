@@ -9,4 +9,4 @@
 #load_rec "tools.cmo";;
 #load_rec "poker.cmo";;
 #load_rec "player.cmo";;
-#load_red "gamestate.cmo";;
+#load_rec "gamestate.cmo";;

@@ -49,6 +49,9 @@ let bet_msg player_name =
   player_name ^  ", please enter how much you wish to bet.\n"
 let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
                        greater than 0 and less than your limit.\n"
+let invalid_raise_msg prev = "You have entered a bet less than the previous \
+                              bet. Please enter a bet greater than "
+                             ^ string_of_int prev ^ ".\n"
 let invalid_double_msg = "You do not have enough money to double."
 let invalid_command_msg = "You have entered an invalid command. Please try \
                            again.\n"
@@ -123,6 +126,8 @@ let refill_deck state =
   let top_up = std_deck () |> shuffle in
   { state with game_deck = top_up }
 
+(** [print_hand state index] prints the hand of the player with 0-based index
+    [index] in [state]. *)
 let print_hand state index = 
   let player = List.nth state.players index in
   let prefix = "Your current hand is " in
@@ -170,29 +175,32 @@ let bj_showdown state =
   let scores = List.map (fun p -> bj_score p.hand) state.players in
   List.map (win_check outcome) scores
 
-(** [pay_player state win n p] pays [p] with 0-based index [n] if they win,
-    given by [win], or charges them if they do not win, and prints the result of
-    whether they win/lose and their remaining money, in [state] *)
-let pay_player state win n p =
+(** [pay_player curr win win_msg loss_msg n p] pays [p] with 0-based index [n]
+    if they win, given by [win], or charges them if they do not win, and prints
+    the result of whether they win/lose (with [win_msg] or [loss_msg],
+    respectively) and their remaining money, in [state] *)
+let pay_player curr win win_msg loss_msg n p =
   let player_n = "Player " ^ string_of_int (n + 1) in
   if win then begin
     p.money <- p.bet + p.money;
-    player_n ^ " won against the dealer and has " ^ string_of_int p.money
-    ^ " " ^ state.currency ^ " total." |> print_endline;
+    player_n ^ " " ^ win_msg ^ " and has " ^ string_of_int p.money
+    ^ " " ^ curr ^ " total." |> print_endline;
   end else begin
     p.money <- p.money - p.bet;
-    player_n ^ " lost against the dealer and has "  ^ string_of_int p.money
-    ^ " " ^ state.currency ^ " total."|> print_endline;
+    player_n ^ " " ^ loss_msg ^ " and has "  ^ string_of_int p.money
+    ^ " " ^ curr ^ " total."|> print_endline;
   end
 
-(** [payout state player_outcomes] pays out each player in [state] who wins
-    and charges each player who loses, whose victory or lack thereof is given by
-    the respective element of [player_outcomes]. It also prints the win/loss
-    and money for each player. *)
-let payout state player_outcomes =
+(** [payout state win_msg loss_msg player_outcomes] pays out each player in
+    [state] who wins with [win_msg] and charges each player who loses with
+    [loss_msg], whose victory or lack thereof is given by
+    the respective element of [player_outcomes]. It also prints the money for
+    each player. *)
+let payout state win_msg loss_msg player_outcomes =
   let players = state.players in
   for i = 0 to state.player_num - 1 do
-    pay_player state (List.nth player_outcomes i) i (List.nth players i)
+    pay_player state.currency (List.nth player_outcomes i) win_msg loss_msg
+      i (List.nth players i)
   done; state
 
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
@@ -203,14 +211,17 @@ let bj_dealer_turn state =
   print_string [] "Dealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
   bj_showdown state |> payout state
+    "won against the dealer" "lost against the dealer"
 
+(** [bet_helper player] is [player] with prompted bet amount assigned. *)
 let bet_helper (player : player) = 
   let msg = bet_msg player.name in
   let bet =
     choose_num_geq_1_leq_n msg invalid_bet_msg player.money true in
   { player with bet = bet }
 
-
+(** [assign_bets_helper lst n acc] is a list of all [n] players in [lst] with 
+    a bet of prompted value assigned to each. *)
 let rec assign_bets_helper lst n acc =
   match lst with 
   | [] -> acc
@@ -219,7 +230,8 @@ let rec assign_bets_helper lst n acc =
       assign_bets_helper t (n - 1) (acc @ [bet_helper h])
     end
 
-
+(** [assign_bets n state] is [state] with a bet (amount prompted) assigned
+    to all [n] players in [state]. *)
 let assign_bets n state = 
   assign_bets_helper state.players n []
 
@@ -229,29 +241,42 @@ let quit_protocol state =
   print_endline goodbye_msg;
   exit 0
 
+(** [invalid_protocol engine state] prompts for another input in the same
+    state. *)
 and invalid_protocol (engine : t -> t) (state : t) : t = 
   print_endline invalid_command_msg;
   engine state 
 
+(** [remaining_players state] is the number of remaining players in the
+    game in state [state]. *)
 let remaining_players state = 
   let remaining_players = List.filter (fun p -> 
       p.in_game = true) state.players in
   List.length remaining_players
 
+(** [all_maxed_bets state] is [true] if all players have betted all
+    their chips and [false] otherwise. If there are no players in [state],
+    it is [true]. *)
 let all_maxed_bets state = 
   let non_maxed_players = List.filter (fun p -> 
-      p.bet = p.money) state.players in
+      p.bet < p.money) state.players in
   List.length non_maxed_players = 0
 
+(** [all_bets_matched_helper lst bet acc] is [true] if all the players in [lst]
+    still in the game have a bet equal to [bet] and [acc] is true.
+    Otherwise, it is [false]. *)
 let rec all_bets_matched_helper lst bet acc = 
   match lst with
   | [] -> true
   | h :: t -> begin
       let bets_match = h.bet = bet in
-      if bets_match then all_bets_matched_helper t bet (acc && bets_match)
+      if bets_match && h.in_game
+      then all_bets_matched_helper t bet (acc && bets_match)
       else false
     end
 
+(** [all_bets_matched state] is [true] if all players have the same bet
+    amount and [false] if not. If there are no players, it is [true]. *)
 let all_bets_matched state = 
   match state.players with
   | [] -> true
@@ -279,6 +304,27 @@ let rec take_poker_command state =
     end
   end
 
+(** [previous_in_player_h (player, state)] is the player who most recently
+    betted before [player] in [state]. *)
+and previous_in_player_h (player, state) =
+  let rec mod_pos a b =
+    match a mod b with
+    | x when x < 0 -> mod_pos (a + b) b
+    | x -> x in
+  let previous_player_index = mod_pos (state.turn - 1) state.player_num in
+  let previous_player = List.nth state.players previous_player_index in
+  if previous_player.in_game
+  then previous_player, state
+  else previous_in_player_h (previous_player, state)
+
+(** [previous_in_player player state] is the player who most recently
+    betted before [player] in [state]. *)
+and previous_in_player player state =
+  previous_in_player_h (player, state) |> fst
+
+(** [p_check_protocol player state] is [state] with [player] checking (matching
+    the previous bet) if allowed and [state] with the turn restarted if checking
+    is not allowed *)
 and p_check_protocol player state = 
   let nonzero_bet_players = List.filter (fun p -> p.bet <> 0) state.players in
   let check_allowed = List.length nonzero_bet_players = 0 in
@@ -288,12 +334,31 @@ and p_check_protocol player state =
     take_poker_command state
   end
 
+(** [p_raise_protocol player state] is [state] with [player] raising
+    (increasing the previous bet) if allowed and [state] with the turn restarted
+    if raising is not allowed *)
 and p_raise_protocol player state = 
-  failwith "gg"
+  let previous_player = previous_in_player player state in
+  let previous_bet = previous_player.bet in
+  let bet = choose_num_geq_1_leq_n (bet_msg player.name)
+      invalid_bet_msg 0 false in
+  if bet > player.money then begin
+    print_string player.style invalid_bet_msg;
+    p_raise_protocol player state
+  end else begin
+    if bet < previous_bet then begin
+      print_string player.style (invalid_raise_msg previous_bet);
+      p_raise_protocol player state
+    end else begin
+      player.bet <- bet; {state with turn = state.turn + 1}
+    end
+  end
 
+(** [p_call_protocol player state] is [state] with [player] calling and
+    advancing to the next turn if calling is allowed, and [state] prompting
+    for new input if not allowed. *)
 and p_call_protocol player state = 
-  let previous_player_index = state.turn - 1 mod state.player_num in
-  let previous_player = List.nth state.players previous_player_index in
+  let previous_player = previous_in_player player state in
   if previous_player.bet <= player.money then begin 
     player.bet <- previous_player.bet;
     {state with turn = state.turn + 1}
@@ -302,8 +367,12 @@ and p_call_protocol player state =
     take_poker_command state
   end
 
-and p_fold_protocol player state = 
-  failwith "gg"
+(** [p_fold_protocol] is [state] with [player] folding. *)
+and p_fold_protocol player state =
+  player.in_game <- false;
+  pay_player state.currency false "fold never wins" "folded"
+    (state.turn mod state.player_num) player;
+  {state with turn = state.turn + 1}
 
 (** TODO: Implement a function that runs a single game of Texas holdem *)
 let poker_turn s = 
@@ -389,12 +458,16 @@ let shared_init s init_bet has_dealer starting_cards =
   let s_with_decks = { (deck s n) with num_decks = n } in
   update_players num_players players s_with_decks |> update_currency
 
+(** [wipe_hands state] is [state] with all players' hands set to empty. *)
 let rec wipe_hands state = 
   let lst = state.players in
   match lst with
   | [] -> ()
   | h :: t -> h.hand <- empty_deck (); wipe_hands { state with players = t}
 
+(** [refresh_state state init_bet] is [state] with all players' and dealer's
+    hands set to empty, decks shuffled, flop empty. Initial bets are assigned
+    if [init_bet]. *)
 let refresh_state state init_bet = 
   dealer.hand <- empty_deck ();
   wipe_hands state;
@@ -405,6 +478,8 @@ let refresh_state state init_bet =
     { state with turn = 0; players = new_players }
   end else { state with turn = 0 }
 
+(** [display_final_scores state] prints the final scores of all players
+    in [state]. *)
 let display_final_scores state = 
   print_endline final_score_header;
   let lst = state.players in

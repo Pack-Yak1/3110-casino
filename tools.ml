@@ -22,11 +22,11 @@ let blackjack_rules = "Rules\n Hit: Take another card from the dealer.\n \
                        bet and commit to standing after one more hit.\n Quit: \
                        Quit the game.\n Tools: View or edit settings and \
                        rules."
-(** TODO: Finish typing rules *)
 let poker_rules = "Rules\n Check: Decline to bet. You keep your hand but do \
-                   not open.\n 
-                   Stand: Take no more cards.\n Double down: Double your \
-                   bet and commit to standing after one more hit.\n Quit: \
+                   not open.\n\
+                   Call: Match the bet of the previous player.\n\
+                   Raise: Bet more than the previous bet.\n\
+                   Fold: Abandon your bet and your cards, leaving the round.\n\
                    Quit the game.\n Tools: View or edit settings and \
                    rules."
 let bridge_rules = "To be implemented"
