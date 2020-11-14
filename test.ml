@@ -175,15 +175,6 @@ let string_of_hand = function
   | StraightFlush c -> "Straight flush " ^ string_of_deck c
   | RoyalFlush -> "Royal flush"
 
-let test_hand_value name deck expected_output  =
-  name >:: (fun _ -> 
-      assert_equal expected_output (hand_value deck)
-        ~printer: string_of_hand)
-
-let test_cmp_hand name c1 c2 expected_output  =
-  name >:: (fun _ -> 
-      assert_equal expected_output (c2 |> cmp_hand c1 |> int_to_cmp))
-
 let p1  = make_card S 14
 let p2  = make_card S 2
 let p3  = make_card S 3
@@ -260,6 +251,9 @@ let l21 = make_deck [c1; c2; c3; c8; c9;]
 let l22 = make_deck [c1; c2; c8; c8; c8]
 let l23 = make_deck [c8; c8; c8; c8; c8; c8; c8; c8; c8; c8; c8]
 let l24 = make_deck [c8; c8; c8; c8; c8; c8; c8; c8; c8; c8; c8; c8]
+let l25 = make_deck [p1; p10; p12; p33; p48; p13; p11]
+let l26 = make_deck [p14; p18; p22; p23; p26; p27; p2]
+let l27 = make_deck [p2; p3; p4; p5; p45; p41; p22]
 
 let deck_tests = "Deck test suite" >::: [
     test_cmp_suit "spades > hearts" c1 c2 Greater;
@@ -368,7 +362,38 @@ let deck_tests = "Deck test suite" >::: [
     test_straight_flush "flush only" l9 d5;
     test_straight_flush "straight flush" l12 l12';
     test_straight_flush "royal flush" l11 l11';
+  ]
 
+(** [bj_win_check_test name outcome player_score exp] constructs an OUnit
+    test with name [name] that asserts the equality of [exp] with
+    [win_check outcome player_score]. *)
+let bj_win_check_test name outcome player_score exp =
+  name >:: (fun _ -> assert_equal exp (win_check outcome player_score))
+
+let bj_tests = "Blackjack test suite" >::: [
+    bj_win_check_test "DealerBust 20 true" DealerBust 20 true;
+    bj_win_check_test "DealerBust 21 true" DealerBust 21 true;
+    bj_win_check_test "DealerBust 22 false" DealerBust 22 false;
+    bj_win_check_test "Dealer 21 20 false" (Match 21) 20 false;
+    bj_win_check_test "Dealer 21 21 false" (Match 21) 21 false;
+    bj_win_check_test "Dealer 21 22 false" (Match 21) 22 false;
+    bj_win_check_test "Dealer 18 17 false" (Match 18) 18 false;
+    bj_win_check_test "Dealer 18 18 false" (Match 18) 18 false;
+    bj_win_check_test "Dealer 18 19 true" (Match 18) 19 true;
+    bj_win_check_test "Dealer 18 21 true" (Match 18) 21 true;
+    bj_win_check_test "Dealer 18 22 false" (Match 18) 22 false;
+  ]
+
+let test_hand_value name deck expected_output  =
+  name >:: (fun _ -> 
+      assert_equal expected_output (hand_value deck)
+        ~printer: string_of_hand)
+
+let test_cmp_hand name c1 c2 expected_output  =
+  name >:: (fun _ -> 
+      assert_equal expected_output (c2 |> cmp_hand c1 |> int_to_cmp))
+
+let poker_tests = "Poker test suite" >::: [
     test_hand_value "Two pairs" l1 (TwoPairs (3, 2, l1'));
     test_hand_value "High Card" l2 (HighCard l2');
     test_hand_value "Full house" l3 (FullHouse (10, 7));
@@ -392,31 +417,17 @@ let deck_tests = "Deck test suite" >::: [
     test_cmp_hand "compare pair, different pair" l4 l7 Greater;
     test_cmp_hand "two Four of a kind, different rank of 4" l14 l15 Lesser;
     test_cmp_hand "two Four of a kind, different single card" l15 l16 Lesser;
+    test_cmp_hand "two royal flush" l11 l25 Equal;
+    test_cmp_hand "two different flush" l9 l26 Lesser;
+    test_cmp_hand "two different straight" l13 l27 Greater;
   ]
 
-(** [bj_win_check_test name outcome player_score exp] constructs an OUnit
-    test with name [name] that asserts the equality of [exp] with
-    [win_check outcome player_score]. *)
-let bj_win_check_test name outcome player_score exp =
-  name >:: (fun _ -> assert_equal exp (win_check outcome player_score))
-
-let bj_tests = "Blackjack test suite" >::: [
-    bj_win_check_test "DealerBust 20 true" DealerBust 20 true;
-    bj_win_check_test "DealerBust 21 true" DealerBust 21 true;
-    bj_win_check_test "DealerBust 22 false" DealerBust 22 false;
-    bj_win_check_test "Dealer 21 20 false" (Match 21) 20 false;
-    bj_win_check_test "Dealer 21 21 false" (Match 21) 21 false;
-    bj_win_check_test "Dealer 21 22 false" (Match 21) 22 false;
-    bj_win_check_test "Dealer 18 17 false" (Match 18) 18 false;
-    bj_win_check_test "Dealer 18 18 false" (Match 18) 18 false;
-    bj_win_check_test "Dealer 18 19 true" (Match 18) 19 true;
-    bj_win_check_test "Dealer 18 21 true" (Match 18) 21 true;
-    bj_win_check_test "Dealer 18 22 false" (Match 18) 22 false;
-  ]
 
 let suite =
-  "test suite for Deck and Blackjack"  >::: [
+  "test suite for Deck, Blackjack, and Poker"  >::: [
     deck_tests; 
-    bj_tests]
+    bj_tests;
+    poker_tests;
+  ]
 
 let _ = run_test_tt_main suite
