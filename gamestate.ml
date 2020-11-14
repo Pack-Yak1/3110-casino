@@ -448,7 +448,7 @@ let p_showdown s =
     if not is_winner_i then
       pay_player s.currency false "did not win, not printed" "lost"
         player.name player
-    else begin player.money <- player.money + payment;
+    else begin player.money <- player.money - player.bet + payment;
       player.bet <- 0;
       player.name ^ " won and has " ^ string_of_int player.money
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
