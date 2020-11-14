@@ -472,7 +472,7 @@ let poker_turn s =
     (* Check at least 2 players remaining *)
     if remaining_players_n pre_flop_state < 2 then pre_flop_state
     else begin 
-      deal_n 3 s s.flop;
+      deal_n 3 pre_flop_state pre_flop_state.flop;
       (* 2nd betting round, reset turn to 0 first *)
       let reset_state = {pre_flop_state with turn = 0} in
       print_endline "\nFlop round\n";
@@ -536,6 +536,7 @@ let refresh_state state init_bet =
   wipe_hands state;
   state.game_deck <- n_std_decks state.num_decks |> shuffle;
   state.flop.hand <- empty_deck ();
+  List.iter (fun p -> p.in_game <- true) state.players;
   if init_bet then begin 
     let new_players = assign_bets state.player_num state in
     { state with turn = 0; players = new_players }
