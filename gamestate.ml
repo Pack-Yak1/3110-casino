@@ -282,19 +282,23 @@ and bj_double_protocol player state =
     bj_turn state
   end
 
-(** [remaining_players state] is the number of remaining players in the
-    game in state [state]. *)
-let remaining_players state = 
-  let remaining_players = List.filter (fun p -> 
-      p.in_game = true) state.players in
-  List.length remaining_players
+(** [remaining_players state] is a list of players still in the game in
+    [state] *)
+let remaining_players state =
+  List.filter (fun p -> p.in_game = true) state.players
 
-(** [all_maxed_bets state] is [true] if all players have betted all
+(** [remaining_players_n state] is the number of remaining players in the
+    game in state [state]. *)
+let remaining_players_n state =
+  remaining_players state |> List.length
+
+(** [all_maxed_bets state] is [true] if all remaining players have betted all
     their chips and [false] otherwise. If there are no players in [state],
     it is [true]. *)
-let all_maxed_bets state = 
+let all_maxed_bets state =
+  let rem_players = remaining_players state in
   let non_maxed_players = List.filter (fun p -> 
-      p.bet < p.money) state.players in
+      p.bet < p.money) rem_players in
   List.length non_maxed_players = 0
 
 (** [all_bets_matched_helper lst bet acc] is [true] if all the players in [lst]
@@ -318,7 +322,7 @@ let all_bets_matched state =
   | h :: t -> all_bets_matched_helper t h.bet true
 
 let rec take_poker_command state = 
-  if remaining_players state = 0 then state
+  if remaining_players_n state <= 1 then state
   else if all_maxed_bets state then state
   else if all_bets_matched state && state.turn > (state.player_num - 1)
   then state
@@ -347,7 +351,7 @@ and previous_in_player_h (player, state) =
     match a mod b with
     | x when x < 0 -> mod_pos (a + b) b
     | x -> x in
-  let previous_player_index = mod_pos (state.turn - 1) state.player_num in
+  let previous_player_index = mod_pos (state.turn - 1) (state.player_num - 1) in
   let previous_player = List.nth state.players previous_player_index in
   if previous_player.in_game
   then previous_player, state
@@ -381,9 +385,10 @@ and p_raise_protocol player state =
   end else
     let bet = choose_num_geq_1_leq_n (bet_msg player.name)
         invalid_bet_msg 0 false in
-    if bet > player.money - player.bet then begin
-      print_string player.style "You do not have enough money to raise this \
-                                 amount.\n";
+    let can_bet = player.money - player.bet in
+    if bet > can_bet then begin
+      "You do not have enough money to raise this amount. You can bet up to "
+      ^ (string_of_int can_bet) ^ "\n" |> print_string player.style;
       p_raise_protocol player state
     end else begin
       if bet + player.bet <= previous_bet then begin
@@ -415,7 +420,7 @@ and p_call_protocol player state =
 (** [p_fold_protocol] is [state] with [player] folding. *)
 and p_fold_protocol player state =
   player.in_game <- false;
-  pay_player state.currency false "fold never wins" "folded"
+  pay_player state.currency false "failwith fold never wins" "folded"
     player.name player;
   take_poker_command {state with turn = state.turn + 1}
 
@@ -454,27 +459,32 @@ let p_showdown s =
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
     end done; s
 
+(** [reenter_all s] puts all the players back into the game after a round
+    ends *)
+let reenter_all s =
+  List.iter (fun p -> p.in_game <- true) s.players; s
+
 let poker_turn s =
   let p_game s =
     (* 1st betting round *)
     print_endline "\nPre-flop round\n";
     let pre_flop_state = take_poker_command s in
     (* Check at least 2 players remaining *)
-    if remaining_players pre_flop_state < 2 then pre_flop_state
+    if remaining_players_n pre_flop_state < 2 then pre_flop_state
     else begin 
       deal_n 3 s s.flop;
       (* 2nd betting round, reset turn to 0 first *)
       let reset_state = {pre_flop_state with turn = 0} in
       print_endline "\nFlop round\n";
       let flop_state = take_poker_command reset_state in
-      if remaining_players flop_state < 2 then flop_state
+      if remaining_players_n flop_state < 2 then flop_state
       else begin
         deal_n 1 flop_state flop_state.flop;
         (* 3rd betting round, reset turn to 0 first *)
         let reset_state = {flop_state with turn = 0} in
         print_endline "\nTurn round\n";
         let turn_state = take_poker_command reset_state in
-        if remaining_players turn_state < 2 then turn_state
+        if remaining_players_n turn_state < 2 then turn_state
         else begin
           deal_n 1 turn_state turn_state.flop;
           (* 4th and final betting round, reset to 0 first *)
@@ -571,16 +581,15 @@ let rec play_round init_bet has_dealer starting_cards state turn =
     print_endline no_players_left_msg;
     quit_protocol state
   end else
-    (* Resets game turn, all players and community decks (TODO: community deck 
-       not implemented yet), and resets the main deck to its initial size. If 
-       the game mode permits betting before cards are dealt, bets are also 
-       obtained from StdIn. *)
+    (* Resets game turn, all players and community decks, and resets the main
+       deck to its initial size. If the game mode permits betting before
+       cards are dealt, bets are also obtained from StdIn. *)
     let new_state = refresh_state state init_bet in
 
     (* Deal cards to every player, then the dealer if there is one. *)
     deal_all new_state starting_cards has_dealer;
 
-    let final_state = turn new_state in
+    let final_state = turn new_state |> reenter_all in
 
     (* Checks if the game shall run another round *)
     let replay_wanted = replay () in
