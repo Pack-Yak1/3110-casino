@@ -52,6 +52,9 @@ let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
 let invalid_raise_msg prev = "You have entered a bet that is not \
                               more than the previous bet. Please enter a bet \
                               greater than " ^ string_of_int prev ^ ".\n"
+let bet_over_money_msg = "You do not have enough money to raise.\n"
+let bet_over_rem_msg = "You do not have enough money to raise this amount. \
+                        You can bet up to "
 let invalid_double_msg = "You do not have enough money to double."
 let invalid_command_msg = "You have entered an invalid command. Please try \
                            again.\n"
@@ -182,15 +185,17 @@ let bj_showdown state =
 let pay_player curr win win_msg loss_msg name p =
   if win then begin
     p.money <- p.bet + p.money;
-    p.bet <- 0;
     name ^ " " ^ win_msg ^ " and has " ^ string_of_int p.money
     ^ " " ^ curr ^ " total." |> print_endline;
   end else begin
     p.money <- p.money - p.bet;
-    p.bet <- 0;
     name ^ " " ^ loss_msg ^ " and has "  ^ string_of_int p.money
     ^ " " ^ curr ^ " total."|> print_endline;
   end
+
+(** [reset_bets s] is [s] with the bets of all players set to 0. *)
+let reset_bets s =
+  List.iter (fun p -> p.bet <- 0) s.players
 
 (** [payout state win_msg loss_msg player_outcomes] pays out each player in
     [state] who wins with [win_msg] and charges each player who loses with
@@ -202,7 +207,7 @@ let payout state win_msg loss_msg player_outcomes =
   for i = 0 to state.player_num - 1 do
     let player = List.nth players i in
     pay_player state.currency (List.nth player_outcomes i) win_msg loss_msg
-      player.name player
+      player.name player; reset_bets state
   done; state
 
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
@@ -351,14 +356,15 @@ and previous_in_player_h (player, state) =
     match a mod b with
     | x when x < 0 -> mod_pos (a + b) b
     | x -> x in
-  let previous_player_index = mod_pos (state.turn - 1) (state.player_num - 1) in
+  let previous_player_index = mod_pos (state.turn - 1) (state.player_num) in
   let previous_player = List.nth state.players previous_player_index in
   if previous_player.in_game
   then previous_player, state
   else previous_in_player_h (previous_player, state)
 
 (** [previous_in_player player state] is the player who most recently
-    betted before [player] in [state]. *)
+    betted before [player] in [state]. If no one has betted, it is
+    the previous player. *)
 and previous_in_player player state =
   previous_in_player_h (player, state) |> fst
 
@@ -380,15 +386,15 @@ and p_raise_protocol player state =
   let previous_player = previous_in_player player state in
   let previous_bet = previous_player.bet in
   if previous_bet >= player.money then begin
-    print_string player.style "You do not have enough money to raise.\n";
+    print_string player.style bet_over_money_msg;
     take_poker_command state;
   end else
     let bet = choose_num_geq_1_leq_n (bet_msg player.name)
         invalid_bet_msg 0 false in
     let can_bet = player.money - player.bet in
     if bet > can_bet then begin
-      "You do not have enough money to raise this amount. You can bet up to "
-      ^ (string_of_int can_bet) ^ "\n" |> print_string player.style;
+      bet_over_rem_msg ^ (string_of_int can_bet) ^ "\n"
+      |> print_string player.style;
       p_raise_protocol player state
     end else begin
       if bet + player.bet <= previous_bet then begin
@@ -420,8 +426,9 @@ and p_call_protocol player state =
 (** [p_fold_protocol] is [state] with [player] folding. *)
 and p_fold_protocol player state =
   player.in_game <- false;
-  pay_player state.currency false "failwith fold never wins" "folded"
-    player.name player;
+  let rem = player.money - player.bet in
+  player.name ^ " folded and has " ^ string_of_int rem ^ " "
+  ^ state.currency ^ " left.\n" |> print_string player.style;
   take_poker_command {state with turn = state.turn + 1}
 
 (** [p_winners players s] is a list of winners in remaining [players] at the 
@@ -457,7 +464,7 @@ let p_showdown s =
       player.bet <- 0;
       player.name ^ " won and has " ^ string_of_int player.money
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
-    end done; s
+    end done; reset_bets s; s
 
 (** [reenter_all s] puts all the players back into the game after a round
     ends *)
