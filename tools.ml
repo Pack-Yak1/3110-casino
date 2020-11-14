@@ -25,7 +25,9 @@ let blackjack_rules = "Rules\n Hit: Take another card from the dealer.\n \
 let poker_rules = "Rules\nCheck: Decline to bet. You keep your hand but do \
                    not open.\n\
                    Call: Match the bet of the previous player.\n\
-                   Raise: Bet more than the previous bet.\n\
+                   Raise: Bet more than the previous bet. Enter the amount \
+                   by which you want to increase your total bet, across all \
+                   rounds.\n\
                    Fold: Abandon your bet and your cards, leaving the round.\n\
                    Quit the game.\nTools: View or edit settings and \
                    rules."
