@@ -25,7 +25,7 @@ docs: build
 		-inv-merge-ml-mli -m A $(MLIS) $(MLS)
 
 zip:
-	zip src.zip *.ml* _tags .merlin .ocamlinit Makefile INSTALL.txt
+	zip src.zip *.ml* _tags .merlin .ocamlinit Makefile INSTALL.txt *.json
 
 clean:
 	ocamlbuild -clean
