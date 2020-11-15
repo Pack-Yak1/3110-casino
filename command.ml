@@ -10,6 +10,7 @@ type p_command =
   | Raise
   | Call
   | Fold
+  | Remind
   | Quit
   | Tools
 
@@ -20,7 +21,8 @@ let parse_bj str =
   match c with 
   | "hit" -> Hit
   | "stand" -> Stand
-  | "double down" -> Double
+  | "double down"
+  | "double" -> Double
   | "quit" -> Quit
   | "tools" -> Tools
   | _ -> raise Invalid_command
@@ -32,6 +34,8 @@ let parse_p str =
   | "raise" -> Raise
   | "call" -> Call
   | "fold" -> Fold
+  | "remind"
+  | "remind bet" -> Remind
   | "quit" -> Quit
   | "tools" -> Tools
   | _ -> raise Invalid_command

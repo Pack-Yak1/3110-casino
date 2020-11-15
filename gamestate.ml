@@ -49,12 +49,9 @@ let bet_msg player_name =
   player_name ^  ", please enter how much you wish to bet.\n"
 let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
                        greater than 0 and less than your limit.\n"
-let invalid_raise_msg prev = "You have entered a bet that is not \
-                              more than the previous bet. Please enter a bet \
-                              greater than " ^ string_of_int prev ^ ".\n"
 let bet_over_money_msg = "You do not have enough money to raise.\n"
-let bet_over_rem_msg = "You do not have enough money to raise this amount. \
-                        You can bet up to "
+let bet_over_rem_msg lim = "You do not have enough money to raise by this \
+                            amount. You can bet up to " ^ lim ^ " more.\n"
 let current_bet_msg player curr =
   "You currently have "^ string_of_int player.bet ^ " " ^ curr ^ " bet.\n"
 let invalid_double_msg = "You do not have enough money to double."
@@ -345,6 +342,7 @@ let rec take_poker_command state =
         | Raise -> p_raise_protocol p state
         | Call -> p_call_protocol p state
         | Fold -> p_fold_protocol p state
+        | Remind -> p_remind_protocol p state
         | Quit -> quit_protocol state
         | Tools -> Tools.show_menu state.name p; take_poker_command state
       with 
@@ -368,7 +366,7 @@ and find_index x lst =
     betted before [player] in [state]. If [player] is the first to play,
     returns [player]. *)
 and previous_bet_player_h (player, state) =
-  if List.hd state.players = player then player, state else
+  if List.hd state.players = player && state.turn = 0 then player, state else
     let rec mod_pos a b =
       match a mod b with
       | x when x < 0 -> mod_pos (a + b) b
@@ -409,20 +407,14 @@ and p_raise_protocol player state =
   end else
     let bet = choose_num_geq_1_leq_n (bet_msg player.name)
         invalid_bet_msg 0 false in
-    let can_bet = player.money - player.bet in
+    let can_bet = player.money - previous_bet in
     if bet > can_bet then begin
-      bet_over_rem_msg ^ (string_of_int can_bet) ^ " more.\n"
-      |> print_string player.style;
+      bet_over_rem_msg (string_of_int can_bet) |> print_string player.style;
       p_raise_protocol player state
     end else begin
-      if bet + player.bet <= previous_bet then begin
-        print_string player.style (invalid_raise_msg previous_bet);
-        p_raise_protocol player state
-      end else begin
-        player.bet <- player.bet + bet;
-        current_bet_msg player state.currency |> print_string player.style;
-        take_poker_command {state with turn = state.turn + 1}
-      end
+      player.bet <- previous_bet + bet;
+      current_bet_msg player state.currency |> print_string player.style;
+      take_poker_command {state with turn = state.turn + 1}
     end
 
 (** [p_call_protocol player state] is [state] with [player] calling and
@@ -438,6 +430,12 @@ and p_call_protocol player state =
     print_endline "You do not have enough money to call";
     take_poker_command state
   end
+
+(** [p_remind_protocol player state] prints the current bet of [player]
+    and prompts for a new command. *)
+and p_remind_protocol player state =
+  current_bet_msg player state.currency |> print_string player.style;
+  take_poker_command state
 
 (** [p_fold_protocol] is [state] with [player] folding. *)
 and p_fold_protocol player state =

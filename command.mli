@@ -12,6 +12,7 @@ type p_command =
   | Raise
   | Call
   | Fold
+  | Remind
   | Quit
   | Tools
 
