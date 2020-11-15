@@ -55,6 +55,8 @@ let invalid_raise_msg prev = "You have entered a bet that is not \
 let bet_over_money_msg = "You do not have enough money to raise.\n"
 let bet_over_rem_msg = "You do not have enough money to raise this amount. \
                         You can bet up to "
+let current_bet_msg player curr =
+  "You currently have "^ string_of_int player.bet ^ " " ^ curr ^ " bet.\n"
 let invalid_double_msg = "You do not have enough money to double."
 let invalid_command_msg = "You have entered an invalid command. Please try \
                            again.\n"
@@ -65,7 +67,7 @@ let invalid_check_msg = "A player has already opened the betting round. You \
 let turn_msg (state : t) n = 
   let name = (List.nth state.players n).name in
   "It is now " ^ name ^ "'s turn.\n"
-let yes_or_no_prompt = "Do you wish to play another round? (y/n)"
+let yes_or_no_prompt = "\nDo you wish to play another round? (y/n)"
 let yes_or_no_reminder = "Please enter either 'y' or 'n'.\n"
 let final_score_header = "\nFinal Scores:\n"
 let no_players_left_msg = "There are no players left in the game."
@@ -313,8 +315,8 @@ let rec all_bets_matched_helper lst bet acc =
   match lst with
   | [] -> true
   | h :: t -> begin
-      let bets_match = h.bet = bet in
-      if bets_match && h.in_game
+      let bets_match = h.bet = bet && h.in_game in
+      if bets_match
       then all_bets_matched_helper t bet (acc && bets_match)
       else false
     end
@@ -334,7 +336,8 @@ let rec take_poker_command state =
   else begin 
     let player_index = state.turn mod state.player_num in
     let p = List.nth state.players player_index in
-    if p.in_game = false then {state with turn = state.turn + 1}
+    if p.in_game = false then
+      take_poker_command {state with turn = state.turn + 1}
     else begin 
       start_turn state player_index;
       try match read_line() |> parse_p with
@@ -349,24 +352,39 @@ let rec take_poker_command state =
     end
   end
 
-(** [previous_in_player_h (player, state)] is the player who most recently
-    betted before [player] in [state]. *)
-and previous_in_player_h (player, state) =
-  let rec mod_pos a b =
-    match a mod b with
-    | x when x < 0 -> mod_pos (a + b) b
-    | x -> x in
-  let previous_player_index = mod_pos (state.turn - 1) (state.player_num) in
-  let previous_player = List.nth state.players previous_player_index in
-  if previous_player.in_game
-  then previous_player, state
-  else previous_in_player_h (previous_player, state)
+(** [find_index_h x acc lst] is the index of [x] in [lst] if it is present,
+    shifted up by [acc], the number of elements in the list of interest
+    preceding [lst]. If not in [lst], behavior is unspecified. *)
+and find_index_h x acc = function
+  | [] -> failwith "Not found"
+  | h :: t -> if h = x then acc else find_index_h x (acc + 1) t
 
-(** [previous_in_player player state] is the player who most recently
+(** [find_index x lst] is the index of [x] in [lst] if it is present.
+    If not, behavior is unspecified. *)
+and find_index x lst =
+  find_index_h x 0 lst
+
+(** [previous_bet_player_h (player, state)] is the player who most recently
+    betted before [player] in [state]. If [player] is the first to play,
+    returns [player]. *)
+and previous_bet_player_h (player, state) =
+  if List.hd state.players = player then player, state else
+    let rec mod_pos a b =
+      match a mod b with
+      | x when x < 0 -> mod_pos (a + b) b
+      | x -> x in
+    let previous_player_index = mod_pos (find_index player state.players - 1)
+        (state.player_num) in
+    let previous_player = List.nth state.players previous_player_index in
+    if previous_player.in_game
+    then previous_player, state
+    else previous_bet_player_h (previous_player, state)
+
+(** [previous_bet_player player state] is the player who most recently
     betted before [player] in [state]. If no one has betted, it is
     the previous player. *)
-and previous_in_player player state =
-  previous_in_player_h (player, state) |> fst
+and previous_bet_player player state =
+  previous_bet_player_h (player, state) |> fst
 
 (** [p_check_protocol player state] is [state] with [player] checking (matching
     the previous bet) if allowed and [state] with the turn restarted if checking
@@ -383,8 +401,8 @@ and p_check_protocol player state =
     (increasing the previous bet) if allowed and [state] with the turn restarted
     if raising is not allowed *)
 and p_raise_protocol player state = 
-  let previous_player = previous_in_player player state in
-  let previous_bet = previous_player.bet in
+  let previous_bet_player = previous_bet_player player state in
+  let previous_bet = previous_bet_player.bet in
   if previous_bet >= player.money then begin
     print_string player.style bet_over_money_msg;
     take_poker_command state;
@@ -402,8 +420,7 @@ and p_raise_protocol player state =
         p_raise_protocol player state
       end else begin
         player.bet <- player.bet + bet;
-        "You currently have " ^ string_of_int player.bet ^ " bet.\n"
-        |> print_string player.style;
+        current_bet_msg player state.currency |> print_string player.style;
         take_poker_command {state with turn = state.turn + 1}
       end
     end
@@ -412,11 +429,10 @@ and p_raise_protocol player state =
     advancing to the next turn if calling is allowed, and [state] prompting
     for new input if not allowed. *)
 and p_call_protocol player state = 
-  let previous_player = previous_in_player player state in
+  let previous_player = previous_bet_player player state in
   if previous_player.bet <= player.money then begin 
     player.bet <- previous_player.bet;
-    "You currently have " ^ string_of_int player.bet ^ " bet.\n"
-    |> print_string player.style;
+    current_bet_msg player state.currency |> print_string player.style;
     take_poker_command {state with turn = state.turn + 1}
   end else begin 
     print_endline "You do not have enough money to call";
@@ -494,8 +510,8 @@ let poker_turn s =
         if remaining_players_n turn_state < 2 then turn_state
         else begin
           deal_n 1 turn_state turn_state.flop;
-          (* 4th and final betting round, reset to 0 first *)
-          print_endline "\nRiver round";
+          (* 4th and final betting round, reset turn to 0 first *)
+          print_endline "\nRiver round\n";
           let reset_state = {turn_state with turn = 0} in
           take_poker_command reset_state
         end
