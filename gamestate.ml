@@ -321,7 +321,7 @@ let rec all_bets_matched_helper lst bet acc =
 (** [all_bets_matched state] is [true] if all players have the same bet
     amount and [false] if not. If there are no players, it is [true]. *)
 let all_bets_matched state = 
-  match state.players with
+  match remaining_players state with
   | [] -> true
   | h :: t -> all_bets_matched_helper t h.bet true
 
