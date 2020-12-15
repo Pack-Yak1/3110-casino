@@ -3,8 +3,7 @@ open Deck
 open ANSITerminal
 open Blackjack
 open Command
-open Yojson.Basic
-open Yojson.Basic.Util
+open Tools
 
 type player = Player.t
 
@@ -171,29 +170,6 @@ let deal_all state n has_dealer =
   List.iter (deal_n n state) players;
   if has_dealer then deal_n n state dealer else ()
 
-(** [update_total_game_stats_h name assoc] adds 1 to the number of plays of
-    the game with name [name] in [assoc]. *)
-let update_total_game_stats_h name assoc =
-  let replace_if_match pair =
-    match pair with
-    | game, `Int n as data ->
-      if game |> String.lowercase_ascii = name then game, `Int (n + 1)
-      else data
-    | _ -> failwith "wrong json format" in
-  match assoc with
-  | `Assoc lst ->
-    List.map replace_if_match lst
-  | _ -> failwith "wrong json format"
-
-let update_total_game_stats s =
-  let j = from_file "stats.json" in
-  let players = j |> member "Players" in
-  let total = j |> member "Total games played" in
-  let new_total = update_total_game_stats_h s.name total in
-  let new_j =
-    `Assoc ["Players", players; "Total games played", `Assoc new_total] in
-  to_file "stats.json" new_j
-
 (** [bj_showdown state] is a list containing whether the players in [state]
     have won or not, in their respective order *)
 let bj_showdown state =
@@ -225,13 +201,16 @@ let reset_bets s =
     [state] who wins with [win_msg] and charges each player who loses with
     [loss_msg], whose victory or lack thereof is given by
     the respective element of [player_outcomes]. It also prints the money for
-    each player. *)
+    each player and updates statistics. *)
 let payout state win_msg loss_msg player_outcomes =
   let players = state.players in
   for i = 0 to state.player_num - 1 do
     let player = List.nth players i in
-    pay_player state.currency (List.nth player_outcomes i) win_msg loss_msg
-      player.name player; reset_bets state
+    let win = List.nth player_outcomes i in
+    pay_player state.currency win win_msg loss_msg player.name player;
+    reset_bets state;
+    update_player_stats player.name
+      (string_of_int player.money ^ " " ^ state.currency) state.name win
   done; state
 
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
@@ -241,7 +220,6 @@ let bj_dealer_turn state =
   done;
   print_string [] "Dealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
-  update_total_game_stats state;
   bj_showdown state |> payout state
     "won against the dealer" "lost against the dealer"
 
@@ -504,7 +482,9 @@ let p_showdown s =
       player.bet <- 0;
       player.name ^ " won and has " ^ string_of_int player.money
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
-    end done; reset_bets s; update_total_game_stats s; s
+    end; update_player_stats player.name
+      (string_of_int player.money ^ " " ^ s.currency) s.name is_winner_i;
+  done; reset_bets s; s
 
 (** [reenter_all s] puts all the players back into the game after a round
     ends *)
@@ -576,9 +556,10 @@ let rec wipe_hands state =
   | h :: t -> h.hand <- empty_deck (); wipe_hands { state with players = t}
 
 (** [refresh_state state init_bet] is [state] with all players' and dealer's
-    hands set to empty, decks shuffled, flop empty. Initial bets are assigned
-    if [init_bet]. *)
+    hands set to empty, decks shuffled, flop empty, overall stats updated.
+    Initial bets are assigned if [init_bet]. *)
 let refresh_state state init_bet = 
+  update_total_game_stats state.name;
   dealer.hand <- empty_deck ();
   wipe_hands state;
   state.game_deck <- n_std_decks state.num_decks |> shuffle;
