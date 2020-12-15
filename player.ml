@@ -7,6 +7,7 @@ type t = {
   mutable bet : int;
   mutable money : int;
   mutable in_game : bool;
+  mutable bet_on : Baccarat.outcome;
   mutable style : ANSITerminal.style list;
 }
 
@@ -18,6 +19,7 @@ let default_player = {
   bet = 0;
   money = default_allowance;
   in_game = true;
+  bet_on = Tie;
   style = []
 }
 
@@ -27,6 +29,7 @@ let dealer = {
   bet = 0;
   money = max_int;
   in_game = true;
+  bet_on = Tie;
   style = []
 }
 
@@ -36,6 +39,7 @@ let flop = {
   bet = 0;
   money = 0;
   in_game = true;
+  bet_on = Tie;
   style = [];
 }
 

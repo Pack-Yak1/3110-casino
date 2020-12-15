@@ -4,6 +4,7 @@ open ANSITerminal
 open Blackjack
 open Command
 open Tools
+open Baccarat
 
 type player = Player.t
 
@@ -15,7 +16,8 @@ type t = {
   turn : int;
   mutable players : player list;
   currency : string;
-  num_decks : int
+  num_decks : int;
+  mutable ba_players : player list;
 }
 
 let default_currency = "USD"
@@ -31,12 +33,13 @@ let default_game = {
   players = [];
   currency = default_currency;
   num_decks = 0;
+  ba_players = [];
 }
 
 let input_prompt = "> "
 
 let game_seln_msg = "Please enter the name of the game you want to play: \
-                     Blackjack, Poker, Bridge.\n"
+                     Blackjack, Poker, Baccarat.\n"
 let no_such_game_msg = "You entered an invalid game name. Please try again.\n"
 let number_of_decks_msg = "Please enter the number of decks to play with. It \
                            must be a number greater than 0.\n"
@@ -60,6 +63,11 @@ let invalid_command_msg = "You have entered an invalid command. Please try \
                            again.\n"
 let invalid_check_msg = "A player has already opened the betting round. You \
                          may no longer check."
+let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
+                  'banker' or 'player'or 'tie'. \n"
+let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
+                          enter either 'banker' or 'player' or 'tie' \n"
+
 (** [turn_msg n] is a string prompt for the [n-th] user to enter their
     command. *)
 let turn_msg (state : t) n = 
@@ -75,7 +83,7 @@ let goodbye_msg = "Goodbye!"
 
 
 (** List of names of supported games. *)
-let games = ["blackjack"; "poker"]
+let games = ["blackjack"; "poker"; "baccarat"]
 
 
 let rec choose_game () =
@@ -112,7 +120,14 @@ let rec choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit =
   | None -> print_endline no_entry_msg;
     choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
 
-
+let rec choose_bet () =
+  print_endline bet_on_msg;
+  let n = read_line () |> String.trim |> String.lowercase_ascii in
+  match n with
+  | "banker" -> Banker
+  | "player" -> Player 
+  | "tie" -> Tie
+  | _ -> print_endline invalid_bet_on_msg; choose_bet ()
 
 (** [update_players n p s] is [s] with [player_num] equal to [n], and [players]
     equal to [p]. *)
@@ -223,26 +238,29 @@ let bj_dealer_turn state =
     "won against the dealer" "lost against the dealer"
 
 (** [bet_helper player] is [player] with prompted bet amount assigned. *)
-let bet_helper (player : player) = 
+let bet_helper (player : player) st = 
   let msg = bet_msg player.name in
   let bet =
     choose_num_geq_1_leq_n msg invalid_bet_msg player.money true in
-  { player with bet = bet }
+  let p = { player with bet = bet } in 
+  if st.name = "baccarat" then 
+    let b = choose_bet () in {p with bet_on = b}
+  else p
 
 (** [assign_bets_helper lst n acc] is a list of all [n] players in [lst] with 
     a bet of prompted value assigned to each. *)
-let rec assign_bets_helper lst n acc =
+let rec assign_bets_helper lst n acc st =
   match lst with 
   | [] -> acc
   | h :: t -> 
     if n = 0 then acc else begin
-      assign_bets_helper t (n - 1) (acc @ [bet_helper h])
+      assign_bets_helper t (n - 1) (acc @ [bet_helper h st]) st
     end
 
 (** [assign_bets n state] is [state] with a bet (amount prompted) assigned
     to all [n] players in [state]. *)
 let assign_bets n state = 
-  assign_bets_helper state.players n []
+  assign_bets_helper state.players n [] state
 
 (** [quit_protocol] ends the game instantly and prints a goodbye message.
     It is shared by all game modes. *)
@@ -288,6 +306,103 @@ and bj_double_protocol player state =
     print_endline invalid_double_msg;
     bj_turn state
   end
+
+let player_ba st = 
+  match st.ba_players with 
+  | [] -> failwith "Wrong number of ba_players"
+  | h :: t -> h
+
+let banker_ba st = 
+  match st.ba_players with 
+  | h :: h2 :: [] -> h2
+  | _ -> failwith "Wrong number of ba_players"
+
+(** rank of third carrd received by player. *)
+let third st = 
+  let c = return (player_ba st).hand 1 |> of_deck in
+  match c with 
+  | [n] -> rank n 
+  | _ ->  failwith "Wrong number of cards"
+
+let ba_helper st = 
+  print_string [] "Now Player's hand is ";
+  (player_ba st).hand |> Deck.string_of_deck |> print_endline; 
+  print_string [] "Now Banker's hand is ";
+  (banker_ba st).hand |> Deck.string_of_deck |> print_endline;
+  let b_score = ba_score (banker_ba st).hand in
+  let p_score = ba_score (player_ba st).hand in 
+  if b_score > p_score then Banker
+  else if  b_score < p_score then Player 
+  else Tie
+
+let banker_rule st = 
+  let b_score = ba_score (banker_ba st).hand in
+  let p_cards = length (player_ba st).hand in 
+  if p_cards = 2 then begin 
+    if b_score = 6 || b_score = 7 then ()
+    else deal_n 1 st (banker_ba st);
+  end else begin 
+    let p = third st in 
+    match b_score with 
+    | 2 -> deal_n 1 st (banker_ba st)
+    | 3 -> if p = 8 then () else deal_n 1 st (banker_ba st)
+    | 4 -> if p = 2 || p = 3 || p = 4 || p = 5 || p = 6 || p = 7 
+      then deal_n 1 st (banker_ba st) else ()
+    | 5 -> if p = 4 || p = 5 || p = 6 || p = 7 
+      then deal_n 1 st (banker_ba st) else ()
+    | 6 -> if p = 6 || p = 7 
+      then deal_n 1 st (banker_ba st) else ()
+    | _ -> () end;
+  ba_helper st 
+
+let player_rule p st = 
+  if p = 6 || p = 7 then ()
+  else deal_n 1 st (player_ba st);
+  banker_rule st
+
+let ba_result st = 
+  let b = ba_score (banker_ba st).hand in 
+  let p = ba_score (player_ba st).hand in 
+  match (p, b) with
+  | 8, 8 -> Tie
+  | 9, 9 -> Tie
+  | 8, 9 -> Tie 
+  | 9, 8 -> Tie
+  | 8, _ -> Player
+  | 9, _ -> Player
+  | _, 8 -> Banker
+  | _, 9 -> Banker
+  | _ -> player_rule p st
+
+let ba_showdown outcome st = 
+  let players = st.players in 
+  for i = 0 to st.player_num - 1 do 
+    let player = List.nth players i in 
+    let win = List.nth (List.map (fun x -> x.bet_on = outcome) players) i in 
+    pay_player st.currency win "won" "lose" player.name player;
+    update_player_stats player.name
+      (string_of_int player.money ^ " " ^ st.currency) st.name win
+  done; reset_bets st; st
+
+let ba_turn s =
+  let banker = {default_player with name = "banker"} in
+  let player =  {default_player with name = "player"} in
+  s.ba_players <- [player; banker];
+  List.iter (deal_n 1 s) s.ba_players;
+  List.iter (deal_n 1 s) s.ba_players;
+  print_string [] "Player's hand is ";
+  player.hand |> Deck.string_of_deck |> print_endline; 
+  print_string [] "Banker's hand is ";
+  banker.hand |> Deck.string_of_deck |> print_endline; 
+  print_endline "Press anything to continue.\n"; 
+  ignore (read_line());
+  let outcome = ba_result s in begin
+    match outcome with 
+    | Player -> print_endline "player win"
+    | Banker -> print_endline "banker win"
+    | Tie -> print_endline "there is a tie"
+  end;
+  ba_showdown outcome s
 
 (** [remaining_players state] is a list of players still in the game in
     [state] *)

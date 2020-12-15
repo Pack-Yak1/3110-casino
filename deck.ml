@@ -134,6 +134,17 @@ let bj_score deck =
   let nat_bj = length deck = 2 && aced_sum = 21 in
   if nat_bj then -1 else aced_sum
 
+let ba_card_value card = 
+  let r = rank card in 
+  if r = 10 || r = 11 || r = 12 || r = 13 then 0
+  else if r = 14 then 1 
+  else r
+
+let ba_score deck = 
+  let lst = List.map ba_card_value deck in 
+  let sum = List.fold_left ( + )  0 lst in 
+  sum mod 10
+
 let rec rank_of_pair = function
   | [] | [_] -> None
   | h1 :: h2 :: t -> 

@@ -43,11 +43,19 @@ let poker_info = {
   engine = Gamestate.poker_turn
 }
 
+let ba_info = {
+  init_bet = Baccarat.init_bet;
+  has_dealer = Baccarat.has_dealer;
+  initial_cards = Baccarat.initial_cards;
+  engine = Gamestate.ba_turn
+}
+
 (** [info str] returns the [game_info] associated with the game name, [str]. 
     Raises an error if [str] is not a supported game mode. *)
 let info str = 
   if str = "blackjack" then bj_info
   else if str = "poker" then poker_info
+  else if str = "baccarat" then ba_info
   else failwith "An invalid game name was used in shared_init ()" 
 
 

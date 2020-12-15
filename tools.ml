@@ -31,11 +31,14 @@ let poker_rules = "Rules\nCheck: Decline to bet. You keep your hand but do \
                    Fold: Abandon your bet and your cards, leaving the round.\n\
                    Quit the game.\nTools: View or edit settings and \
                    rules."
-let bridge_rules = "To be implemented"
+let baccarat_rules = "Rules\n There are two hands at the deck, Banker and Player.\
+                      You can bet on Banker, Player, or Tie before drawing cards.\
+                      Whoever closer to 9 wins."
 
 let rules = [
   ("blackjack", blackjack_rules);
-  ("poker", poker_rules)
+  ("poker", poker_rules);
+  ("baccarat", baccarat_rules)
 ]
 
 (** [str_of_game_player game p] represents the play data for the game with
