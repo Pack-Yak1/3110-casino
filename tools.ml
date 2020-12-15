@@ -43,11 +43,15 @@ let j = Yojson.Basic.from_file "stats.json"
 let parse_tools_cmd str =
   let cmd = String.trim str |> String.lowercase_ascii in
   match cmd with
+  | "color"
+  | "text color"
   | "set color"
   | "set text color" -> Set_Color
+  | "rules"
   | "view rules" -> View_Rules
-  | "view statistics"
-  | "view stats" -> View_Statistics
+  | "stats"
+  | "view stats"
+  | "view statistics" -> View_Statistics
   | "return to game"
   | "return"
   | "back" -> Return
@@ -82,47 +86,73 @@ and view_rules game player return =
   print_endline "";
   if return then show_menu game player else ()
 
-(** [print_stats game j_player player] prints the statistisc for [j_player]
-    during [player]'s turn in the game with name [game] *)
-and print_stats game j_player player =
-  let name = j_player |> member "name" |> to_string in
-  let money = j_player |> member "money" |> to_string in
-  let plays = j_player |> member "plays" |> to_int in
+(** [str_of_game_player game p] represents the play data for the game with
+    name [game] and for [p] *)
+and str_of_game_player game p =
+  let game_data = p |> member game in
+  let plays = game_data |> member "Plays" |> to_int in
+  let wins = game_data |> member "Wins" |> to_int in
+  "\n" ^ game ^ ": " ^
+  "\n  Plays: " ^ string_of_int plays ^
+  "\n  Wins: " ^ string_of_int wins
+
+(** [str_of_all_games_player p] represents the play data for all games
+    for [p] *)
+and str_of_all_games_player p =
+  let bj_str = str_of_game_player "Blackjack" p in
+  let poker_str = str_of_game_player "Poker" p in
+  let baccarat_str = str_of_game_player "Baccarat" p in
+  bj_str ^ poker_str ^ baccarat_str
+
+(** [print_stats_player j_player player] prints the statistics for
+    [j_player] during [player]'s turn *)
+and print_stats_player j_player player =
+  let name = j_player |> member "Name" |> to_string in
+  let money = j_player |> member "Money" |> to_string in
+  let all_games = str_of_all_games_player j_player in
   "Name: " ^ name ^
   "\nMoney: " ^ money ^
-  "\nPlays: " ^ string_of_int plays ^ "\n" |> print_string player.style;
+  all_games ^ "\n\n" |> print_string player.style
 
-  (** [view_my_stats game player] displays the statistics for [player]
-      during the game with name [game] *)
+(** [view_my_stats game player] displays the statistics for [player]
+        during the game with name [game] *)
 and view_my_stats game player =
-  let players = j |> member "players" |> to_list in
+  let players = j |> member "Players" |> to_list in
   let me = players |> List.find
-             (fun p -> p |> member "name" |> to_string = player.name) in
-  print_stats game me player;
+             (fun p -> p |> member "Name" |> to_string = player.name) in
+  print_stats_player me player;
   use_stats game player
+
+(** [str_of_total_stats] represents the play data for all games *)
+and str_of_total_stats =
+  let total_data = j |> member "Total games played" in
+  let bj_plays = total_data |> member "Blackjack" |> to_int |> string_of_int in
+  let poker_plays = total_data |> member "Poker" |> to_int |> string_of_int in
+  let bct_plays = total_data |> member "Baccarat" |> to_int |> string_of_int in
+  "Total games played: " ^
+  "\n  Blackjack: " ^ bj_plays ^
+  "\n  Poker: " ^ poker_plays ^
+  "\n  Baccarat: " ^ bct_plays
 
 (** [view_all_stats game player] displays the statistics for all players
     in the game with name [game] during [player]'s turn *)
+(** TODO: fix new structure *)
 and view_all_stats game player =
-  let players = j |> member "players" |> to_list in
-  List.iter (fun p -> print_stats game p player) players;
-  print_string player.style "Total games played: ";
-  let t_plays = j |> member "Total games played" |> to_int |> string_of_int in
-  print_string player.style (t_plays ^ "\n");
+  let players = j |> member "Players" |> to_list in
+  List.iter (fun p -> print_stats_player p player) players;
+  str_of_total_stats ^ "\n" |>  print_string player.style;
   use_stats game player
 
 (** [reset_stats game player] resets the statistics in the game with
     name [name] during [player]'s turn *)
 and reset_stats game player =
   let default = {|{
-  "players": [
-    {
-      "name": "default_player",
-      "money": "10000 USD",
-      "plays": 20000
-    }
-  ],
-  "Total plays": 0
+  "Players": [],
+  "Total games played": {
+    "Blackjack": 0,
+    "Poker": 0,
+    "Baccarat": 0
+  }
 }|} in
   let () =
     let file = "stats.json" in
@@ -148,15 +178,8 @@ and use_stats game player =
   | "return"
   | "tools"
   | "return to tools" -> show_menu game player
-  | _ -> print_endline "Not a valid command. Try again.";
+  | _ -> print_string player.style "Not a valid command. Try again.";
     use_stats game player
-
-(*TODO: open statistics file and find player's data, then report all data on
-  prompt. plays, wins, money
-  parse json?*)
-and view_statistics game player =
-  use_stats game player;
-  show_menu game player
 
 and show_menu game player =
   print_string player.style "Tools: set text color, view rules, view \
@@ -166,6 +189,7 @@ and show_menu game player =
   match cmd with
   | Set_Color -> set_color game player
   | View_Rules -> view_rules game player true
-  | View_Statistics -> view_statistics game player
+  | View_Statistics -> use_stats game player
   | Return -> ()
-  | _ -> print_endline "Not an available tool."; show_menu game player
+  | _ -> print_string player.style "Not an available tool.";
+    show_menu game player

@@ -3,6 +3,8 @@ open Deck
 open ANSITerminal
 open Blackjack
 open Command
+open Yojson.Basic
+open Yojson.Basic.Util
 
 type player = Player.t
 
@@ -169,6 +171,29 @@ let deal_all state n has_dealer =
   List.iter (deal_n n state) players;
   if has_dealer then deal_n n state dealer else ()
 
+(** [update_total_game_stats_h name assoc] adds 1 to the number of plays of
+    the game with name [name] in [assoc]. *)
+let update_total_game_stats_h name assoc =
+  let replace_if_match pair =
+    match pair with
+    | game, `Int n as data ->
+      if game |> String.lowercase_ascii = name then game, `Int (n + 1)
+      else data
+    | _ -> failwith "wrong json format" in
+  match assoc with
+  | `Assoc lst ->
+    List.map replace_if_match lst
+  | _ -> failwith "wrong json format"
+
+let update_total_game_stats s =
+  let j = from_file "stats.json" in
+  let players = j |> member "Players" in
+  let total = j |> member "Total games played" in
+  let new_total = update_total_game_stats_h s.name total in
+  let new_j =
+    `Assoc ["Players", players; "Total games played", `Assoc new_total] in
+  to_file "stats.json" new_j
+
 (** [bj_showdown state] is a list containing whether the players in [state]
     have won or not, in their respective order *)
 let bj_showdown state =
@@ -216,6 +241,7 @@ let bj_dealer_turn state =
   done;
   print_string [] "Dealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
+  update_total_game_stats state;
   bj_showdown state |> payout state
     "won against the dealer" "lost against the dealer"
 
@@ -325,6 +351,18 @@ let all_bets_matched state =
   | [] -> true
   | h :: t -> all_bets_matched_helper t h.bet true
 
+(** [find_index_h x acc lst] is the index of [x] in [lst] if it is present,
+    shifted up by [acc], the number of elements in the list of interest
+    preceding [lst]. If not in [lst], behavior is unspecified. *)
+let rec find_index_h x acc = function
+  | [] -> failwith "Not found"
+  | h :: t -> if h = x then acc else find_index_h x (acc + 1) t
+
+(** [find_index x lst] is the index of [x] in [lst] if it is present.
+    If not, behavior is unspecified. *)
+let find_index x lst =
+  find_index_h x 0 lst
+
 let rec take_poker_command state = 
   if remaining_players_n state <= 1 then state
   else if all_maxed_bets state then state
@@ -349,18 +387,6 @@ let rec take_poker_command state =
       | Invalid_command -> invalid_protocol take_poker_command state
     end
   end
-
-(** [find_index_h x acc lst] is the index of [x] in [lst] if it is present,
-    shifted up by [acc], the number of elements in the list of interest
-    preceding [lst]. If not in [lst], behavior is unspecified. *)
-and find_index_h x acc = function
-  | [] -> failwith "Not found"
-  | h :: t -> if h = x then acc else find_index_h x (acc + 1) t
-
-(** [find_index x lst] is the index of [x] in [lst] if it is present.
-    If not, behavior is unspecified. *)
-and find_index x lst =
-  find_index_h x 0 lst
 
 (** [previous_bet_player_h (player, state)] is the player who most recently
     betted before [player] in [state]. If [player] is the first to play,
@@ -462,7 +488,7 @@ let p_winners players s =
     top_n hi_lo_sorted_p []
 
 (** [p_showdown s] pays the winning players in end of game [s] and charges
-    the losing players*)
+    the losing players. It also records statistics. *)
 let p_showdown s =
   let remaining_players = List.filter (fun p -> p.in_game) s.players in
   let winners = p_winners remaining_players s in
@@ -478,7 +504,7 @@ let p_showdown s =
       player.bet <- 0;
       player.name ^ " won and has " ^ string_of_int player.money
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
-    end done; reset_bets s; s
+    end done; reset_bets s; update_total_game_stats s; s
 
 (** [reenter_all s] puts all the players back into the game after a round
     ends *)

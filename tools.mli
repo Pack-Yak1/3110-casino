@@ -28,4 +28,4 @@ val view_rules : string -> player -> bool -> unit
 
 (** Displays statistics for [player] for past games, then returns to
     the game with name [game]. *)
-val view_statistics : string -> player -> unit
+val view_stats : string -> player -> unit
