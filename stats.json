@@ -1,11 +1,59 @@
 {
   "Players": [
     {
-      "Name": "default_player",
-      "Money": "90 amt",
+      "Name": "a",
+      "Money": "",
       "Blackjack": {
-        "Plays": 2,
-        "Wins": 2
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Poker": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "new2",
+      "Money": "93 $",
+      "Blackjack": {
+        "Plays": 1,
+        "Wins": 0
+      },
+      "Poker": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "new1",
+      "Money": "105 $",
+      "Blackjack": {
+        "Plays": 1,
+        "Wins": 1
+      },
+      "Poker": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "default_player",
+      "Money": "97 $",
+      "Blackjack": {
+        "Plays": 5,
+        "Wins": 4
       },
       "Poker": {
         "Plays": 2,
@@ -34,7 +82,7 @@
     }
   ],
   "Total games played": {
-    "Blackjack": 29,
+    "Blackjack": 32,
     "Poker": 4,
     "Baccarat": 0
   }
