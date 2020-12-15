@@ -197,21 +197,20 @@ let pay_player curr win win_msg loss_msg name p =
 let reset_bets s =
   List.iter (fun p -> p.bet <- 0) s.players
 
-(** [payout state win_msg loss_msg player_outcomes] pays out each player in
+(** [bj_payout state win_msg loss_msg player_outcomes] pays out each player in
     [state] who wins with [win_msg] and charges each player who loses with
     [loss_msg], whose victory or lack thereof is given by
     the respective element of [player_outcomes]. It also prints the money for
     each player and updates statistics. *)
-let payout state win_msg loss_msg player_outcomes =
+let bj_payout state win_msg loss_msg player_outcomes =
   let players = state.players in
   for i = 0 to state.player_num - 1 do
     let player = List.nth players i in
     let win = List.nth player_outcomes i in
     pay_player state.currency win win_msg loss_msg player.name player;
-    reset_bets state;
     update_player_stats player.name
       (string_of_int player.money ^ " " ^ state.currency) state.name win
-  done; state
+  done; reset_bets state; state
 
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
 let bj_dealer_turn state = 
@@ -220,7 +219,7 @@ let bj_dealer_turn state =
   done;
   print_string [] "Dealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
-  bj_showdown state |> payout state
+  bj_showdown state |> bj_payout state
     "won against the dealer" "lost against the dealer"
 
 (** [bet_helper player] is [player] with prompted bet amount assigned. *)
@@ -559,7 +558,6 @@ let rec wipe_hands state =
     hands set to empty, decks shuffled, flop empty, overall stats updated.
     Initial bets are assigned if [init_bet]. *)
 let refresh_state state init_bet = 
-  update_total_game_stats state.name;
   dealer.hand <- empty_deck ();
   wipe_hands state;
   state.game_deck <- n_std_decks state.num_decks |> shuffle;
@@ -619,6 +617,8 @@ let rec play_round init_bet has_dealer starting_cards state turn =
     deal_all new_state starting_cards has_dealer;
 
     let final_state = turn new_state |> reenter_all in
+
+    update_total_game_stats state.name;
 
     (* Checks if the game shall run another round *)
     let replay_wanted = replay () in
