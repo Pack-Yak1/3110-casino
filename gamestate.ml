@@ -82,7 +82,7 @@ let rec choose_game () =
   print_endline game_seln_msg;
   print_string [] input_prompt;
   let name = read_line () |> String.trim |> String.lowercase_ascii in 
-  if List.exists (( = ) name) games
+  if List.mem name games
   then { default_game with name = name }
   else begin 
     print_endline no_such_game_msg; 
@@ -481,7 +481,8 @@ let p_showdown s =
       player.bet <- 0;
       player.name ^ " won and has " ^ string_of_int player.money
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
-    end; update_player_stats player.name
+    end;
+    update_player_stats player.name
       (string_of_int player.money ^ " " ^ s.currency) s.name is_winner_i;
   done; reset_bets s; s
 

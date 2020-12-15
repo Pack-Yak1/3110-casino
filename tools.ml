@@ -38,8 +38,6 @@ let rules = [
   ("poker", poker_rules)
 ]
 
-let j = Yojson.Basic.from_file "stats.json"
-
 (** [str_of_game_player game p] represents the play data for the game with
     name [game] and for [p] *)
 let str_of_game_player game p =
@@ -68,8 +66,8 @@ let print_stats_player j_player player =
   "\nMoney: " ^ money ^
   all_games ^ "\n\n" |> print_string player.style
 
-(** [str_of_total_stats] represents the play data for all games *)
-let str_of_total_stats =
+(** [str_of_total_stats j] represents the play data in [j] for all games *)
+let str_of_total_stats j =
   let total_data = j |> member "Total games played" in
   let bj_plays = total_data |> member "Blackjack" |> to_int |> string_of_int in
   let poker_plays = total_data |> member "Poker" |> to_int |> string_of_int in
@@ -112,6 +110,7 @@ let update_if_match name money game win player =
   | _ -> failwith "not a player"
 
 let update_player_stats name money game win =
+  let j = Yojson.Basic.from_file "stats.json" in
   let assoc = j |> member "Players" in
   let total = j |> member "Total games played" in
   match assoc with
@@ -135,6 +134,7 @@ let update_total_game_stats_h name assoc =
   | _ -> failwith "wrong json format"
 
 let update_total_game_stats game =
+  let j = Yojson.Basic.from_file "stats.json" in
   let players = j |> member "Players" in
   let total = j |> member "Total games played" in
   let new_total = update_total_game_stats_h game total in
@@ -190,9 +190,9 @@ and view_rules game player return =
 
 
 
-(** [view_my_stats game player] displays the statistics for [player]
+(** [view_my_stats j game player] displays the statistics for [player] in [j]
         during the game with name [game] *)
-and view_my_stats game player =
+and view_my_stats j game player =
   let players = j |> member "Players" |> to_list in
   let me = players |> List.find
              (fun p -> p |> member "Name" |> to_string = player.name) in
@@ -200,14 +200,12 @@ and view_my_stats game player =
   view_stats game player
 
 
-
-(** [view_all_stats game player] displays the statistics for all players
-    in the game with name [game] during [player]'s turn *)
-(** TODO: fix new structure *)
-and view_all_stats game player =
+(** [view_all_stats j game player] displays the statistics in [j] for all
+    players in the game with name [game] during [player]'s turn *)
+and view_all_stats j game player =
   let players = j |> member "Players" |> to_list in
   List.iter (fun p -> print_stats_player p player) players;
-  str_of_total_stats ^ "\n" |>  print_string player.style;
+  (str_of_total_stats j) ^ "\n" |>  print_string player.style;
   view_stats game player
 
 (** [reset_stats game player] resets the statistics in the game with
@@ -231,17 +229,20 @@ and reset_stats game player =
     and reset statistics, eventually able to return to the game with name
     [game]. *)
 and view_stats game player =
+  let j = Yojson.Basic.from_file "stats.json" in
   print_string player.style "Select: view my stats, view all stats, \
-                             reset stats, return to tools\n> ";
+                             reset stats for all players, return to tools\n> ";
   let str = read_line () |> String.trim |> String.lowercase_ascii in
   match str with
   | "my stats"
-  | "view my stats" -> view_my_stats game player
+  | "view my stats" -> view_my_stats j game player
   | "view all"
   | "all stats"
-  | "view all stats" -> view_all_stats game player
+  | "view all stats" -> view_all_stats j game player
   | "reset"
-  | "reset stats" -> reset_stats game player
+  | "reset stats"
+  | "reset stats for all"
+  | "reset stats for all players" -> reset_stats game player
   | "return"
   | "tools"
   | "return to tools" -> show_menu game player
