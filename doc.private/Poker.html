@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Tools.html">
+<link rel="next" href="Player.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Deck" rel="Chapter" href="Deck.html">
+<link title="Command" rel="Chapter" href="Command.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Blackjack" rel="Chapter" href="Blackjack.html">
+<link title="Authors" rel="Chapter" href="Authors.html">
+<link title="Tools" rel="Chapter" href="Tools.html">
+<link title="Poker" rel="Chapter" href="Poker.html">
+<link title="Player" rel="Chapter" href="Player.html">
+<link title="Gamestate" rel="Chapter" href="Gamestate.html">
+<link title="Baccarat" rel="Chapter" href="Baccarat.html"><title>Poker</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Tools.html" title="Tools">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Player.html" title="Player">Next</a>
+</div>
+<h1>Module <a href="type_Poker.html">Poker</a></h1>
+
+<pre><span id="MODULEPoker"><span class="keyword">module</span> Poker</span>: <code class="code">sig</code> <a href="Poker.html">..</a> <code class="code">end</code></pre><hr width="100%">
+
+<pre><span id="VALinitial_cards"><span class="keyword">val</span> initial_cards</span> : <code class="type">int</code></pre><div class="info ">
+<div class="info-desc">
+<p>The number of cards each player begins with.</p>
+</div>
+</div>
+
+<pre><span id="VALinit_bet"><span class="keyword">val</span> init_bet</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">init_bet</code> is true iff players are allowed to case bets before cards are 
+    dealt</p>
+</div>
+</div>
+
+<pre><span id="VALhas_dealer"><span class="keyword">val</span> has_dealer</span> : <code class="type">bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">has_dealer</code> is true iff the game has a dealer controlled by the computer.</p>
+</div>
+</div>
+
+<pre><code><span id="TYPEhand"><span class="keyword">type</span> <code class="type"></code>hand</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.HighCard"><span class="constructor">HighCard</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.Pair"><span class="constructor">Pair</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPErank">Deck.rank</a> * <a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.TwoPairs"><span class="constructor">TwoPairs</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPErank">Deck.rank</a> * <a href="Deck.html#TYPErank">Deck.rank</a> * <a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.ThreeOfAKind"><span class="constructor">ThreeOfAKind</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPErank">Deck.rank</a> * <a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.Straight"><span class="constructor">Straight</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.Flush"><span class="constructor">Flush</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.FullHouse"><span class="constructor">FullHouse</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPErank">Deck.rank</a> * <a href="Deck.html#TYPErank">Deck.rank</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.FourOfAKind"><span class="constructor">FourOfAKind</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPErank">Deck.rank</a> * <a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.StraightFlush"><span class="constructor">StraightFlush</span></span> <span class="keyword">of</span> <code class="type"><a href="Deck.html#TYPEt">Deck.t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELThand.RoyalFlush"><span class="constructor">RoyalFlush</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><span id="VALhand_score"><span class="keyword">val</span> hand_score</span> : <code class="type"><a href="Poker.html#TYPEhand">hand</a> -> int</code></pre>
+<pre><span id="VALis_pair"><span class="keyword">val</span> is_pair</span> : <code class="type"><a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Poker.html#TYPEhand">hand</a></code></pre>
+<pre><span id="VALhouse_helper"><span class="keyword">val</span> house_helper</span> : <code class="type"><a href="Deck.html#TYPErank">Deck.rank</a> -> <a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Poker.html#TYPEhand">hand</a> -> <a href="Poker.html#TYPEhand">hand</a></code></pre>
+<pre><span id="VALis_full_house"><span class="keyword">val</span> is_full_house</span> : <code class="type"><a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Poker.html#TYPEhand">hand</a></code></pre>
+<pre><span id="VALfirst"><span class="keyword">val</span> first</span> : <code class="type"><a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Deck.html#TYPEcard">Deck.card</a></code></pre>
+<pre><span id="VALsf_helper"><span class="keyword">val</span> sf_helper</span> : <code class="type"><a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Deck.html#TYPEt">Deck.t</a> -> bool -> <a href="Poker.html#TYPEhand">hand</a></code></pre>
+<pre><span id="VALis_straight_flush"><span class="keyword">val</span> is_straight_flush</span> : <code class="type"><a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Poker.html#TYPEhand">hand</a></code></pre>
+<pre><span id="VALcmp_type"><span class="keyword">val</span> cmp_type</span> : <code class="type"><a href="Poker.html#TYPEhand">hand</a> -> <a href="Poker.html#TYPEhand">hand</a> -> int</code></pre>
+<pre><span id="VALhand_value"><span class="keyword">val</span> hand_value</span> : <code class="type"><a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Poker.html#TYPEhand">hand</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">hand_value deck</code> is the greatest possible hand value.
+    Requires: the length of deck must be 7.</p>
+</div>
+</div>
+
+<pre><span id="VALget_cards"><span class="keyword">val</span> get_cards</span> : <code class="type"><a href="Poker.html#TYPEhand">hand</a> -> <a href="Deck.html#TYPEt">Deck.t</a></code></pre>
+<pre><span id="VALget_rank"><span class="keyword">val</span> get_rank</span> : <code class="type"><a href="Poker.html#TYPEhand">hand</a> -> <a href="Deck.html#TYPErank">Deck.rank</a></code></pre>
+<pre><span id="VALget_sec_rank"><span class="keyword">val</span> get_sec_rank</span> : <code class="type"><a href="Poker.html#TYPEhand">hand</a> -> <a href="Deck.html#TYPErank">Deck.rank</a></code></pre>
+<pre><span id="VALcmp_rank"><span class="keyword">val</span> cmp_rank</span> : <code class="type"><a href="Poker.html#TYPEhand">hand</a> -> <a href="Poker.html#TYPEhand">hand</a> -> int</code></pre>
+<pre><span id="VALcmp_sec_rank"><span class="keyword">val</span> cmp_sec_rank</span> : <code class="type"><a href="Poker.html#TYPEhand">hand</a> -> <a href="Poker.html#TYPEhand">hand</a> -> int</code></pre>
+<pre><span id="VALcmp_helper"><span class="keyword">val</span> cmp_helper</span> : <code class="type">('a -> 'b -> int) -> ('a -> 'b -> int) -> 'a -> 'b -> int</code></pre>
+<pre><span id="VALcmp_hand"><span class="keyword">val</span> cmp_hand</span> : <code class="type"><a href="Deck.html#TYPEt">Deck.t</a> -> <a href="Deck.html#TYPEt">Deck.t</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">cmp_hand d1 d2</code> compares the hand value of two decks. Returns 1 if 
+    hand value of d1 is greater than that of d2, -1 for less than, 0 for 
+    equal.</p>
+</div>
+</div>
+</body></html>

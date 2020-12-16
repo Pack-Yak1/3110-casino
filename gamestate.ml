@@ -17,11 +17,15 @@ type t = {
   turn : int;
   mutable players : player list;
   currency : string;
+  small_blind : int;
   num_decks : int;
   mutable ba_players : player list;
 }
 
 let default_currency = "USD"
+let default_blind = 0
+let blind_msg s_b = "Small blind: " ^ string_of_int s_b ^ "\nBig Blind: "
+                    ^ string_of_int (2 * s_b)
 
 let default_game = {
   name = "";
@@ -31,6 +35,7 @@ let default_game = {
   turn = 0;
   players = [];
   currency = default_currency;
+  small_blind = 0;
   num_decks = 0;
   ba_players = [];
 }
@@ -44,6 +49,9 @@ let invalid_p_msg = "You have entered an invalid number of players. Please \
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
                      a number greater than 0.\n"
 let number_of_players_msg = "Please enter the number of players.\n"
+let blind_seln_msg = "Please enter the value of the small blind. The value of \
+                      the big blind is twice the value of the small blind."
+let invalid_blind_msg = "The small blind must be positive."
 let bet_msg player_name =
   player_name ^  ", please enter how much you wish to bet.\n"
 let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
