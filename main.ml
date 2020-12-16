@@ -67,6 +67,10 @@ let main () =
   let s = Gamestate.choose_game () in
   Tools.view_rules s.name Player.default_player false;
   print_endline "\n";
+  if s.name = "poker"
+  then "The blinds are " ^ string_of_int s.small_blind ^ "/"
+       ^ string_of_int (s.small_blind * 2) ^ ".\n" |> print_endline
+  else ();
 
   (* Determine if players can make initial bets, and if there is a dealer
        for the selected game mode, and the number of cards each player begins 

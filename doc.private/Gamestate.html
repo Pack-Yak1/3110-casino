@@ -1,0 +1,602 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Player.html">
+<link rel="next" href="Baccarat.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Deck" rel="Chapter" href="Deck.html">
+<link title="Command" rel="Chapter" href="Command.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Blackjack" rel="Chapter" href="Blackjack.html">
+<link title="Authors" rel="Chapter" href="Authors.html">
+<link title="Tools" rel="Chapter" href="Tools.html">
+<link title="Poker" rel="Chapter" href="Poker.html">
+<link title="Player" rel="Chapter" href="Player.html">
+<link title="Gamestate" rel="Chapter" href="Gamestate.html">
+<link title="Baccarat" rel="Chapter" href="Baccarat.html"><title>Gamestate</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Player.html" title="Player">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Baccarat.html" title="Baccarat">Next</a>
+</div>
+<h1>Module <a href="type_Gamestate.html">Gamestate</a></h1>
+
+<pre><span id="MODULEGamestate"><span class="keyword">module</span> Gamestate</span>: <code class="code">sig</code> <a href="Gamestate.html">..</a> <code class="code">end</code></pre><hr width="100%">
+
+<pre><span id="TYPEplayer"><span class="keyword">type</span> <code class="type"></code>player</span> = <code class="type"><a href="Player.html#TYPEt">Player.t</a></code> </pre>
+
+
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.name">name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span class="keyword">mutable&nbsp;</span><span id="TYPEELTt.game_deck">game_deck</span>&nbsp;: <code class="type"><a href="Deck.html#TYPEt">Deck.t</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span class="keyword">mutable&nbsp;</span><span id="TYPEELTt.flop">flop</span>&nbsp;: <code class="type"><a href="Gamestate.html#TYPEplayer">player</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span class="keyword">mutable&nbsp;</span><span id="TYPEELTt.player_num">player_num</span>&nbsp;: <code class="type">int</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.turn">turn</span>&nbsp;: <code class="type">int</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span class="keyword">mutable&nbsp;</span><span id="TYPEELTt.players">players</span>&nbsp;: <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> list</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.currency">currency</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.small_blind">small_blind</span>&nbsp;: <code class="type">int</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.num_decks">num_decks</span>&nbsp;: <code class="type">int</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span class="keyword">mutable&nbsp;</span><span id="TYPEELTt.ba_players">ba_players</span>&nbsp;: <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> list</code>;</code></td>
+
+</tr></table>
+<code>}</code>
+
+<div class="info ">
+<div class="info-desc">
+<p>The abstract type representing a turn in a game. <code class="code">name</code> is the name of the
+    cardgame being played. <code class="code">game_deck</code> is the main deck on the table from which
+    players must draw. <code class="code">turn</code> is the 0-index of the turn in the game, which
+    increments with each player's turn (skipped players' turns are counted).
+    <code class="code">player_num</code> is the number of players in the game.</p>
+</div>
+</div>
+
+
+<pre><span id="VALdefault_currency"><span class="keyword">val</span> default_currency</span> : <code class="type">string</code></pre>
+<pre><span id="VALcurrency_msg"><span class="keyword">val</span> currency_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALdefault_blind"><span class="keyword">val</span> default_blind</span> : <code class="type">int</code></pre>
+<pre><span id="VALblind_msg"><span class="keyword">val</span> blind_msg</span> : <code class="type">int -> string</code></pre>
+<pre><span id="VALdefault_game"><span class="keyword">val</span> default_game</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a></code></pre>
+<pre><span id="VALinput_prompt"><span class="keyword">val</span> input_prompt</span> : <code class="type">string</code></pre>
+<pre><span id="VALgame_seln_msg"><span class="keyword">val</span> game_seln_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALno_such_game_msg"><span class="keyword">val</span> no_such_game_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALnumber_of_decks_msg"><span class="keyword">val</span> number_of_decks_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALno_entry_msg"><span class="keyword">val</span> no_entry_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALinvalid_p_msg"><span class="keyword">val</span> invalid_p_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALinvalid_n_msg"><span class="keyword">val</span> invalid_n_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALnumber_of_players_msg"><span class="keyword">val</span> number_of_players_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALblind_seln_msg"><span class="keyword">val</span> blind_seln_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALinvalid_blind_msg"><span class="keyword">val</span> invalid_blind_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALbet_msg"><span class="keyword">val</span> bet_msg</span> : <code class="type">string -> string</code></pre>
+<pre><span id="VALinvalid_bet_msg"><span class="keyword">val</span> invalid_bet_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALbet_over_money_msg"><span class="keyword">val</span> bet_over_money_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALbet_over_rem_msg"><span class="keyword">val</span> bet_over_rem_msg</span> : <code class="type">string -> string</code></pre>
+<pre><span id="VALcurrent_bet_msg"><span class="keyword">val</span> current_bet_msg</span> : <code class="type"><a href="Player.html#TYPEt">Player.t</a> -> string -> string</code></pre>
+<pre><span id="VALinvalid_double_msg"><span class="keyword">val</span> invalid_double_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALinvalid_command_msg"><span class="keyword">val</span> invalid_command_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALinvalid_check_msg"><span class="keyword">val</span> invalid_check_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALbet_on_msg"><span class="keyword">val</span> bet_on_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALinvalid_bet_on_msg"><span class="keyword">val</span> invalid_bet_on_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALcopy_suffix"><span class="keyword">val</span> copy_suffix</span> : <code class="type">string</code></pre>
+<pre><span id="VALcopy_suffix_len"><span class="keyword">val</span> copy_suffix_len</span> : <code class="type">int</code></pre>
+<pre><span id="VALnot_unique_msg"><span class="keyword">val</span> not_unique_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALnon_2_card_split_msg"><span class="keyword">val</span> non_2_card_split_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALunequal_split_msg"><span class="keyword">val</span> unequal_split_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALturn_msg"><span class="keyword">val</span> turn_msg</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> int -> string</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">turn_msg n</code> is a string prompt for the <code class="code">n-th</code> user to enter their
+    command.</p>
+</div>
+</div>
+
+<pre><span id="VALyes_or_no_prompt"><span class="keyword">val</span> yes_or_no_prompt</span> : <code class="type">string</code></pre>
+<pre><span id="VALyes_or_no_reminder"><span class="keyword">val</span> yes_or_no_reminder</span> : <code class="type">string</code></pre>
+<pre><span id="VALfinal_score_header"><span class="keyword">val</span> final_score_header</span> : <code class="type">string</code></pre>
+<pre><span id="VALno_players_left_msg"><span class="keyword">val</span> no_players_left_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALelimination_msg"><span class="keyword">val</span> elimination_msg</span> : <code class="type">string -> string</code></pre>
+<pre><span id="VALgoodbye_msg"><span class="keyword">val</span> goodbye_msg</span> : <code class="type">string</code></pre>
+<pre><span id="VALgames"><span class="keyword">val</span> games</span> : <code class="type">string list</code></pre><div class="info ">
+<div class="info-desc">
+<p>List of names of supported games.</p>
+</div>
+</div>
+
+<pre><span id="VALchoose_num_geq_1_leq_n"><span class="keyword">val</span> choose_num_geq_1_leq_n</span> : <code class="type">string -> string -> int -> bool -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit</code>
+    prompts the player to enter an int greater than 0 (and possibly less than
+    or equal to <code class="code">cap</code>, depending on <code class="code">exists_limit</code>) by printing
+    <code class="code">initial_prompt</code>. If the input is not greater than 0, or if the input is
+    greater than <code class="code">cap</code> and <code class="code">exists_limit</code> is true, it prints <code class="code">invalid_msg</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALchoose_game"><span class="keyword">val</span> choose_game</span> : <code class="type">unit -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">choose_game</code> is a game state with an empty deck, 1 player and game 
+    name equal to that entered if it is a supported game. If not, the player is
+    prompted to enter a valid game name again.</p>
+</div>
+</div>
+
+<pre><span id="VALchoose_bet"><span class="keyword">val</span> choose_bet</span> : <code class="type">unit -> <a href="Baccarat.html#TYPEoutcome">Baccarat.outcome</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">choose_bet()</code> is Baccarat outcome, banker, player, or tie, the player wants 
+    to bet on.</p>
+</div>
+</div>
+
+<pre><span id="VALupdate_players"><span class="keyword">val</span> update_players</span> : <code class="type">int -> <a href="Gamestate.html#TYPEplayer">player</a> list -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">update_players n p s</code> is <code class="code">s</code> with <code class="code">player_num</code> equal to <code class="code">n</code>, and <code class="code">players</code>
+    equal to <code class="code">p</code>.</p>
+
+<p><code class="code">update_players n p s</code> is <code class="code">s</code> with <code class="code">player_num</code> equal to <code class="code">n</code>, and <code class="code">players</code>
+    equal to <code class="code">p</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALdeck"><span class="keyword">val</span> deck</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> int -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">deck state n</code> is a game state equivalent to <code class="code">state</code>, except with the deck
+    field updated to be a shuffled deck of <code class="code">n</code> 52-card standard decks.</p>
+</div>
+</div>
+
+<pre><span id="VALrefill_deck"><span class="keyword">val</span> refill_deck</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">refill_deck state</code> is a shuffled standard 52-card deck.</p>
+</div>
+</div>
+
+<pre><span id="VALprint_hand"><span class="keyword">val</span> print_hand</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> int -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">print_hand state index</code> prints the hand of the player with 0-based index
+    <code class="code">index</code> in <code class="code">state</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALstart_turn"><span class="keyword">val</span> start_turn</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> int -> unit</code></pre>
+<pre><span id="VALdeal"><span class="keyword">val</span> deal</span> : <code class="type"><a href="Player.html#TYPEt">Player.t</a> -> <a href="Gamestate.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">deal player state</code> deals a card from the game deck in <code class="code">state</code> to the hand
+    of <code class="code">player</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALdeal_n"><span class="keyword">val</span> deal_n</span> : <code class="type">int -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Player.html#TYPEt">Player.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Applies <code class="code">deal player state</code> <code class="code">n</code> times.</p>
+</div>
+</div>
+
+<pre><span id="VALdeal_all"><span class="keyword">val</span> deal_all</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> int -> bool -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p>Deals <code class="code">n</code> cards to all players in <code class="code">state</code>, then <code class="code">n</code> cards to the dealer,
+    if <code class="code">has_dealer</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALbj_showdown"><span class="keyword">val</span> bj_showdown</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> bool list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">bj_showdown state</code> is a list containing whether the players in <code class="code">state</code>
+    have won or not, in their respective order</p>
+</div>
+</div>
+
+<pre><span id="VALpay_player"><span class="keyword">val</span> pay_player</span> : <code class="type">string -> bool -> string -> string -> string -> <a href="Player.html#TYPEt">Player.t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">pay_player curr win win_msg loss_msg p</code> pays <code class="code">p</code> with name <code class="code">name</code>
+    if they win, given by <code class="code">win</code>, or charges them if they do not win, and prints
+    the result of whether they win/lose (with <code class="code">win_msg</code> or <code class="code">loss_msg</code>,
+    respectively) and their remaining money, in <code class="code">state</code></p>
+</div>
+</div>
+
+<pre><span id="VALreset_bets"><span class="keyword">val</span> reset_bets</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">reset_bets s</code> is <code class="code">s</code> with the bets of all players set to 0.</p>
+</div>
+</div>
+
+<pre><span id="VALbj_payout"><span class="keyword">val</span> bj_payout</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> string -> string -> bool list -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">bj_payout state win_msg loss_msg player_outcomes</code> pays out each player in
+    <code class="code">state</code> who wins with <code class="code">win_msg</code> and charges each player who loses with
+    <code class="code">loss_msg</code>, whose victory or lack thereof is given by
+    the respective element of <code class="code">player_outcomes</code>. It also prints the money for
+    each player and updates statistics.</p>
+</div>
+</div>
+
+<pre><span id="VALbj_dealer_turn"><span class="keyword">val</span> bj_dealer_turn</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Plays the dealer's turn, draws until deck score exceeds 17</p>
+</div>
+</div>
+
+<pre><span id="VALbet_helper"><span class="keyword">val</span> bet_helper</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Player.html#TYPEt">Player.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">bet_helper player</code> is <code class="code">player</code> with prompted bet amount assigned.</p>
+</div>
+</div>
+
+<pre><span id="VALassign_bets_helper"><span class="keyword">val</span> assign_bets_helper</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> list -> int -> <a href="Player.html#TYPEt">Player.t</a> list -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Player.html#TYPEt">Player.t</a> list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">assign_bets_helper lst n acc</code> is a list of all <code class="code">n</code> players in <code class="code">lst</code> with 
+    a bet of prompted value assigned to each.</p>
+</div>
+</div>
+
+<pre><span id="VALassign_bets"><span class="keyword">val</span> assign_bets</span> : <code class="type">int -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Player.html#TYPEt">Player.t</a> list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">assign_bets n state</code> is <code class="code">state</code> with a bet (amount prompted) assigned
+    to all <code class="code">n</code> players in <code class="code">state</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALquit_protocol"><span class="keyword">val</span> quit_protocol</span> : <code class="type">'a -> 'b</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">quit_protocol</code> ends the game instantly and prints a goodbye message.
+    It is shared by all game modes.</p>
+</div>
+</div>
+
+<pre><span id="VALinvalid_protocol"><span class="keyword">val</span> invalid_protocol</span> : <code class="type">(<a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a>) -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">invalid_protocol engine state</code> prompts for another input in the same
+    state.</p>
+</div>
+</div>
+
+<pre><span id="VALbj_turn"><span class="keyword">val</span> bj_turn</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Determines whose turn it is, then prompts and takes a command. Recurses
+    to automatically begin the next action. Returns a game_state with the 
+    results of the blackjack game applied.</p>
+</div>
+</div>
+
+<pre><span id="VALbj_split_protocol"><span class="keyword">val</span> bj_split_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre>
+<pre><span id="VALinsert_clone"><span class="keyword">val</span> insert_clone</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">insert_clone player state copy</code> is <code class="code">bj_turn</code> called on <code class="code">state</code>, with 
+    <code class="code">state.player_num</code> incremented by one, and <code class="code">copy</code> inserted to 
+    <code class="code">state.players</code> after the occurance of <code class="code">player</code>. 
+    Requires: <code class="code">player</code> is an element of <code class="code">state.players</code></p>
+</div>
+</div>
+
+<pre><span id="VALinsert_after"><span class="keyword">val</span> insert_after</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -><br>       <a href="Gamestate.html#TYPEplayer">player</a> list -> <a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEplayer">player</a> list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">insert_after p lst copy</code> is <code class="code">copy</code> inserted to <code class="code">lst</code> after the occurance
+    of <code class="code">p</code> in <code class="code">lst</code>.
+    Requires: <code class="code">p</code> is an element of <code class="code">lst</code></p>
+</div>
+</div>
+
+<pre><span id="VALis_copy"><span class="keyword">val</span> is_copy</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">is_copy</code> player is true if <code class="code">player.name</code> ends with <code class="code">copy_suffix</code>, else
+    it is false.</p>
+</div>
+</div>
+
+<pre><span id="VALhas_copy"><span class="keyword">val</span> has_copy</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">has_copy player state</code> is true if <code class="code">state.players</code> contains a copy of
+    <code class="code">player</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALnot_unique"><span class="keyword">val</span> not_unique</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">not_unique player state</code> is true if <code class="code">player</code> has a copy or is itself a 
+    copy.</p>
+</div>
+</div>
+
+<pre><span id="VALbj_hit_protocol"><span class="keyword">val</span> bj_hit_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre>
+<pre><span id="VALbj_stand_protocol"><span class="keyword">val</span> bj_stand_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre>
+<pre><span id="VALbj_double_protocol"><span class="keyword">val</span> bj_double_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre>
+<pre><span id="VALplayer_ba"><span class="keyword">val</span> player_ba</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEplayer">player</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">banker_ba st</code> is the player in gamestate <code class="code">st</code> in a Baccarat game.  
+    Require: ba_players in <code class="code">st</code> contains exactly two players.</p>
+</div>
+</div>
+
+<pre><span id="VALbanker_ba"><span class="keyword">val</span> banker_ba</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEplayer">player</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">banker_ba st</code> is the banker in gamestate <code class="code">st</code> in a Baccarat game. 
+    Require: ba_players in <code class="code">st</code> contains exactly two players.</p>
+</div>
+</div>
+
+<pre><span id="VALthird"><span class="keyword">val</span> third</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Deck.html#TYPErank">Deck.rank</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">third st</code> is rank of third carrd received by player. 
+    Require: the banker's hand in <code class="code">st</code> has exactly three cards.</p>
+</div>
+</div>
+
+<pre><span id="VALba_helper"><span class="keyword">val</span> ba_helper</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Baccarat.html#TYPEoutcome">Baccarat.outcome</a></code></pre>
+<pre><span id="VALbanker_rule"><span class="keyword">val</span> banker_rule</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Baccarat.html#TYPEoutcome">Baccarat.outcome</a></code></pre>
+<pre><span id="VALplayer_rule"><span class="keyword">val</span> player_rule</span> : <code class="type">int -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Baccarat.html#TYPEoutcome">Baccarat.outcome</a></code></pre>
+<pre><span id="VALba_result"><span class="keyword">val</span> ba_result</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Baccarat.html#TYPEoutcome">Baccarat.outcome</a></code></pre>
+<pre><span id="VALba_showdown"><span class="keyword">val</span> ba_showdown</span> : <code class="type"><a href="Baccarat.html#TYPEoutcome">Baccarat.outcome</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre>
+<pre><span id="VALba_turn"><span class="keyword">val</span> ba_turn</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Determines whose turn it is, then prompts and takes a command. Recurses
+    to automatically begin the next action. Returns a game_state with the 
+    results of the baccarat game applied.</p>
+</div>
+</div>
+
+<pre><span id="VALremaining_players"><span class="keyword">val</span> remaining_players</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEplayer">player</a> list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">remaining_players state</code> is a list of players still in the game in
+    <code class="code">state</code></p>
+</div>
+</div>
+
+<pre><span id="VALremaining_players_n"><span class="keyword">val</span> remaining_players_n</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">remaining_players_n state</code> is the number of remaining players in the
+    game in state <code class="code">state</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALall_maxed_bets"><span class="keyword">val</span> all_maxed_bets</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">all_maxed_bets state</code> is <code class="code">true</code> if all remaining players have betted all
+    their chips and <code class="code">false</code> otherwise. If there are no players in <code class="code">state</code>,
+    it is <code class="code">true</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALall_bets_matched_helper"><span class="keyword">val</span> all_bets_matched_helper</span> : <code class="type"><a href="Player.html#TYPEt">Player.t</a> list -> int -> bool -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">all_bets_matched_helper lst bet acc</code> is <code class="code">true</code> if all the players in <code class="code">lst</code>
+    still in the game have a bet equal to <code class="code">bet</code> and <code class="code">acc</code> is true.
+    Otherwise, it is <code class="code">false</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALall_bets_matched"><span class="keyword">val</span> all_bets_matched</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">all_bets_matched state</code> is <code class="code">true</code> if all players have the same bet
+    amount and <code class="code">false</code> if not. If there are no players, it is <code class="code">true</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALfind_index_h"><span class="keyword">val</span> find_index_h</span> : <code class="type">'a -> int -> 'a list -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">find_index_h x acc lst</code> is the index of <code class="code">x</code> in <code class="code">lst</code> if it is present,
+    shifted up by <code class="code">acc</code>, the number of elements in the list of interest
+    preceding <code class="code">lst</code>. If not in <code class="code">lst</code>, behavior is unspecified.</p>
+</div>
+</div>
+
+<pre><span id="VALfind_index"><span class="keyword">val</span> find_index</span> : <code class="type">'a -> 'a list -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">find_index x lst</code> is the index of <code class="code">x</code> in <code class="code">lst</code> if it is present.
+    If not, behavior is unspecified.</p>
+</div>
+</div>
+
+<pre><span id="VALtake_poker_command"><span class="keyword">val</span> take_poker_command</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre>
+<pre><span id="VALprevious_bet_player_h"><span class="keyword">val</span> previous_bet_player_h</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> * <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEplayer">player</a> * <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">previous_bet_player_h (player, state)</code> is the player who most recently
+    betted before <code class="code">player</code> in <code class="code">state</code>. If <code class="code">player</code> is the first to play,
+    returns <code class="code">player</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALprevious_bet_player"><span class="keyword">val</span> previous_bet_player</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEplayer">player</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">previous_bet_player player state</code> is the player who most recently
+    betted before <code class="code">player</code> in <code class="code">state</code>. If no one has betted, it is
+    the previous player.</p>
+</div>
+</div>
+
+<pre><span id="VALp_check_protocol"><span class="keyword">val</span> p_check_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">p_check_protocol player state</code> is <code class="code">state</code> with <code class="code">player</code> checking (matching
+    the previous bet) if allowed and <code class="code">state</code> with the turn restarted if checking
+    is not allowed</p>
+</div>
+</div>
+
+<pre><span id="VALp_raise_protocol"><span class="keyword">val</span> p_raise_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">p_raise_protocol player state</code> is <code class="code">state</code> with <code class="code">player</code> raising
+    (increasing the previous bet) if allowed and <code class="code">state</code> with the turn restarted
+    if raising is not allowed</p>
+</div>
+</div>
+
+<pre><span id="VALp_call_protocol"><span class="keyword">val</span> p_call_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">p_call_protocol player state</code> is <code class="code">state</code> with <code class="code">player</code> calling and
+    advancing to the next turn if calling is allowed, and <code class="code">state</code> prompting
+    for new input if not allowed.</p>
+</div>
+</div>
+
+<pre><span id="VALp_remind_protocol"><span class="keyword">val</span> p_remind_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">p_remind_protocol player state</code> prints the current bet of <code class="code">player</code>
+    and prompts for a new command.</p>
+</div>
+</div>
+
+<pre><span id="VALp_fold_protocol"><span class="keyword">val</span> p_fold_protocol</span> : <code class="type"><a href="Gamestate.html#TYPEplayer">player</a> -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">p_fold_protocol</code> is <code class="code">state</code> with <code class="code">player</code> folding.</p>
+</div>
+</div>
+
+<pre><span id="VALp_winners"><span class="keyword">val</span> p_winners</span> : <code class="type"><a href="Player.html#TYPEt">Player.t</a> list -> <a href="Gamestate.html#TYPEt">t</a> -> <a href="Player.html#TYPEt">Player.t</a> list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">p_winners players s</code> is a list of winners in remaining <code class="code">players</code> at the 
+    end of a game of poker in <code class="code">s</code>.
+    Requires: <code class="code">players</code> is a non-empty list.</p>
+</div>
+</div>
+
+<pre><span id="VALp_showdown"><span class="keyword">val</span> p_showdown</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">p_showdown s</code> pays the winning players in end of game <code class="code">s</code> and charges
+    the losing players. It also records statistics.</p>
+</div>
+</div>
+
+<pre><span id="VALreenter_all"><span class="keyword">val</span> reenter_all</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">reenter_all s</code> puts all the players back into the game after a round
+    ends</p>
+</div>
+</div>
+
+<pre><span id="VALpoker_turn"><span class="keyword">val</span> poker_turn</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p>Plays a game of poker and returns a game_state with the results of the
+    game applieed.</p>
+</div>
+</div>
+
+<pre><span id="VALupdate_currency"><span class="keyword">val</span> update_currency</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">update_currency s</code> is <code class="code">s</code> with unit of currency equal to the
+    entered string.</p>
+</div>
+</div>
+
+<pre><span id="VALshared_init"><span class="keyword">val</span> shared_init</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> 'a -> 'b -> 'c -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">shared_init s init_bet has_dealer starting_cards turn</code> is a game state 
+    with number of decks, number of players, player names and initial bets 
+    (iff <code class="code">init_bet</code> is true) taken from user responses in StdIn. The state 
+    initializes a dealer iff <code class="code">has_dealer</code> is true, and deals each player 
+    <code class="code">starting_cards</code>. The game state returned is <code class="code">s</code> mutated.</p>
+</div>
+</div>
+
+<pre><span id="VALwipe_hands"><span class="keyword">val</span> wipe_hands</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">wipe_hands state</code> is <code class="code">state</code> with all players' hands set to empty.</p>
+</div>
+</div>
+
+<pre><span id="VALrefresh_state"><span class="keyword">val</span> refresh_state</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> bool -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">refresh_state state init_bet</code> is <code class="code">state</code> with all players' and dealer's
+    hands set to empty, decks shuffled, flop empty, overall stats updated.
+    Initial bets are assigned if <code class="code">init_bet</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALdisplay_final_scores"><span class="keyword">val</span> display_final_scores</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">display_final_scores state</code> prints the final scores of all players
+    in <code class="code">state</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALeliminate_player"><span class="keyword">val</span> eliminate_player</span> : <code class="type"><a href="Player.html#TYPEt">Player.t</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eliminate_player player</code> is <code class="code">true</code> if the player is not eliminated.
+    If the player is eliminated, it is <code class="code">false</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALeliminate_bankrupts"><span class="keyword">val</span> eliminate_bankrupts</span> : <code class="type"><a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eliminate_bankrupts state</code> is <code class="code">state</code> with all bankrupt players removed 
+    from <code class="code">state.players</code>. Prints a message whenever a player is eliminated.</p>
+</div>
+</div>
+
+<pre><span id="VALreplay"><span class="keyword">val</span> replay</span> : <code class="type">unit -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p>Prompts for a yes or no response to whether another round is desired.</p>
+</div>
+</div>
+
+<pre><span id="VALplay_round"><span class="keyword">val</span> play_round</span> : <code class="type">bool -> bool -> int -> <a href="Gamestate.html#TYPEt">t</a> -> (<a href="Gamestate.html#TYPEt">t</a> -> <a href="Gamestate.html#TYPEt">t</a>) -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">play_round init_bet has_dealer starting_cards state turn</code> starts a round
+    with values given</p>
+</div>
+</div>
+</body></html>

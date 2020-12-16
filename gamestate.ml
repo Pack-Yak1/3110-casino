@@ -16,6 +16,7 @@ type t = {
   turn : int;
   mutable players : player list;
   currency : string;
+  small_blind : int;
   num_decks : int;
   mutable ba_players : player list;
 }
@@ -23,6 +24,9 @@ type t = {
 let default_currency = "USD"
 let currency_msg = "Please enter your unit of currency.\n"
 
+let default_blind = 0
+let blind_msg s_b = "Small blind: " ^ string_of_int s_b ^ "\nBig Blind: "
+                    ^ string_of_int (2 * s_b)
 
 let default_game = {
   name = "";
@@ -32,6 +36,7 @@ let default_game = {
   turn = 0;
   players = [];
   currency = default_currency;
+  small_blind = 0;
   num_decks = 0;
   ba_players = [];
 }
@@ -49,6 +54,9 @@ let invalid_p_msg = "You have entered an invalid number of players. Please \
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
                      a number greater than 0.\n"
 let number_of_players_msg = "Please enter the number of players.\n"
+let blind_seln_msg = "Please enter the value of the small blind. The value of \
+                      the big blind is twice the value of the small blind."
+let invalid_blind_msg = "The small blind must be positive."
 let bet_msg player_name =
   player_name ^  ", please enter how much you wish to bet.\n"
 let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
@@ -64,9 +72,9 @@ let invalid_command_msg = "You have entered an invalid command. Please try \
 let invalid_check_msg = "A player has already opened the betting round. You \
                          may no longer check.\n"
 let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
-                  'banker' or 'player'or 'tie'. \n"
+                  'banker' or 'player'or 'tie'.\n"
 let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
-                          enter either 'banker' or 'player' or 'tie' \n"
+                          enter either 'banker' or 'player' or 'tie'\n"
 let copy_suffix = "(copy)"
 let copy_suffix_len = String.length copy_suffix
 let not_unique_msg = "You cannot double down or split because you have already\
@@ -88,21 +96,8 @@ let elimination_msg name =
   name ^ " is bankrupt and has been eliminated.\n"
 let goodbye_msg = "Goodbye!"
 
-
 (** List of names of supported games. *)
 let games = ["blackjack"; "poker"; "baccarat"]
-
-
-let rec choose_game () =
-  print_endline game_seln_msg;
-  print_string [] input_prompt;
-  let name = read_line () |> String.trim |> String.lowercase_ascii in 
-  if List.mem name games
-  then { default_game with name = name }
-  else begin 
-    print_endline no_such_game_msg; 
-    choose_game () 
-  end
 
 (** [choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit]
     prompts the player to enter an int greater than 0 (and possibly less than
@@ -127,6 +122,22 @@ let rec choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit =
   | None -> print_endline no_entry_msg;
     choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
 
+let rec choose_game () =
+  print_endline game_seln_msg;
+  print_string [] input_prompt;
+  let name = read_line () |> String.trim |> String.lowercase_ascii in 
+  if List.mem name games
+  then
+    let small_blind =
+      if name = "poker"
+      then choose_num_geq_1_leq_n blind_seln_msg invalid_blind_msg 0 false
+      else 0 in
+    { default_game with name = name; small_blind = small_blind }
+  else begin 
+    print_endline no_such_game_msg; 
+    choose_game () 
+  end
+
 (** [choose_bet()] is Baccarat outcome, banker, player, or tie, the player wants 
     to bet on. *)
 let rec choose_bet () =
@@ -134,7 +145,7 @@ let rec choose_bet () =
   let n = read_line () |> String.trim |> String.lowercase_ascii in
   match n with
   | "banker" -> Banker
-  | "player" -> Player 
+  | "player" -> Player
   | "tie" -> Tie
   | _ -> print_endline invalid_bet_on_msg; choose_bet ()
 
