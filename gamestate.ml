@@ -127,6 +127,8 @@ let rec choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit =
   | None -> print_endline no_entry_msg;
     choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
 
+(** [choose_bet()] is Baccarat outcome, banker, player, or tie, the player wants 
+    to bet on. *)
 let rec choose_bet () =
   print_endline bet_on_msg;
   let n = read_line () |> String.trim |> String.lowercase_ascii in
@@ -397,17 +399,22 @@ and bj_double_protocol player state =
     bj_turn state
   end
 
+(** [banker_ba st] is the player in gamestate [st] in a Baccarat game.  
+    Require: ba_players in [st] contains exactly two players. *)
 let player_ba st = 
   match st.ba_players with 
   | [] -> failwith "Wrong number of ba_players"
   | h :: t -> h
 
+(** [banker_ba st] is the banker in gamestate [st] in a Baccarat game. 
+    Require: ba_players in [st] contains exactly two players. *)
 let banker_ba st = 
   match st.ba_players with 
   | h :: h2 :: [] -> h2
   | _ -> failwith "Wrong number of ba_players"
 
-(** rank of third carrd received by player. *)
+(** [third st] is rank of third carrd received by player. 
+    Require: the banker's hand in [st] has exactly three cards. *)
 let third st = 
   let c = return (player_ba st).hand 1 |> of_deck in
   match c with 
