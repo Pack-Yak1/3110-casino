@@ -3,6 +3,7 @@ type bj_command =
   | Hit
   | Stand
   | Double
+  | Split
   | Quit
   | Tools
 

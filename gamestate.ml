@@ -284,10 +284,15 @@ let rec bj_turn s : t =
       | Hit -> bj_hit_protocol active_player s 
       | Stand -> bj_stand_protocol active_player s 
       | Double -> bj_double_protocol active_player s
+      | Split -> bj_split_protocol active_player s
       | Quit -> quit_protocol s
       | Tools -> Tools.show_menu s.name active_player; bj_turn s
     with
     | Invalid_command -> invalid_protocol bj_turn s
+
+(** [state.player_num] increases *)
+and bj_split_protocol player state = 
+  failwith "todo"
 
 and bj_hit_protocol player state = 
   deal player state;
