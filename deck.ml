@@ -236,6 +236,11 @@ let shuffle (cards : t) : t =
   let sorted = List.sort compare random in 
   List.map (fun (a, b) -> b) sorted
 
+let split deck = 
+  match deck with
+  | h :: [t] -> make_deck [h], make_deck [t]
+  | _ -> failwith "precondition violated"
+
 let string_of_suit = function
   | S -> "♤"
   | H -> "♡"
