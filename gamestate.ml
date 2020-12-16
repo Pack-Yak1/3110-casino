@@ -68,7 +68,6 @@ let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
 let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
                           enter either 'banker' or 'player' or 'tie' \n"
 let copy_suffix = "(copy)"
-let copy_suffix_len = String.length copy_suffix
 let not_unique_msg = "You cannot double down or split because you have already\
                       split this round.\n"
 let non_2_card_split_msg = "You can only split if you have exactly 2 cards.\n"
@@ -80,7 +79,9 @@ let unequal_split_msg = "You can only split if both your cards have the same \
 let turn_msg (state : t) n = 
   let name = (List.nth state.players n).name in
   "It is now " ^ name ^ "'s turn.\n"
-let yes_or_no_prompt = "\nDo you wish to play another round? (y/n)"
+let repeat_game_msg game_name = 
+  "\nDo you wish to play another round of " ^ game_name ^ "? (y/n)"
+let change_game_msg = "\nWould you like to play a different game then?"
 let yes_or_no_reminder = "Please enter either 'y' or 'n'.\n"
 let final_score_header = "\nFinal Scores:\n"
 let no_players_left_msg = "There are no players left in the game."
@@ -88,20 +89,21 @@ let elimination_msg name =
   name ^ " is bankrupt and has been eliminated.\n"
 let goodbye_msg = "Goodbye!"
 
-
 (** List of names of supported games. *)
 let games = ["blackjack"; "poker"; "baccarat"]
 
-
-let rec choose_game () =
+(** [set_gamemode state] is [state] the field [name] set to a game name from 
+    player input, if the player inputs a supported game name. If not, the 
+    player is prompted to enter a valid game name again. *)
+let rec set_gamemode state =
   print_endline game_seln_msg;
   print_string [] input_prompt;
   let name = read_line () |> String.trim |> String.lowercase_ascii in 
   if List.mem name games
-  then { default_game with name = name }
+  then { state with name = name }
   else begin 
     print_endline no_such_game_msg; 
-    choose_game () 
+    set_gamemode state 
   end
 
 (** [choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit]
@@ -126,17 +128,6 @@ let rec choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit =
     end
   | None -> print_endline no_entry_msg;
     choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
-
-(** [choose_bet()] is Baccarat outcome, banker, player, or tie, the player wants 
-    to bet on. *)
-let rec choose_bet () =
-  print_endline bet_on_msg;
-  let n = read_line () |> String.trim |> String.lowercase_ascii in
-  match n with
-  | "banker" -> Banker
-  | "player" -> Player 
-  | "tie" -> Tie
-  | _ -> print_endline invalid_bet_on_msg; choose_bet ()
 
 (** [update_players n p s] is [s] with [player_num] equal to [n], and [players]
     equal to [p]. *)
@@ -164,7 +155,8 @@ let print_hand state index =
 
 let start_turn state player = 
   if length state.flop.hand > 0 then begin
-    let flop_msg = "The community cards are: " ^ (state.flop.hand |> string_of_deck) in
+    let flop_msg = 
+      "The community cards are: " ^ (state.flop.hand |> string_of_deck) in
     print_endline flop_msg;
   end else ();
   player |> turn_msg state |> print_endline;
@@ -221,30 +213,16 @@ let pay_player curr win win_msg loss_msg name p =
 let reset_bets s =
   List.iter (fun p -> p.bet <- 0) s.players
 
-(** [bj_payout state win_msg loss_msg player_outcomes] pays out each player in
-    [state] who wins with [win_msg] and charges each player who loses with
-    [loss_msg], whose victory or lack thereof is given by
-    the respective element of [player_outcomes]. It also prints the money for
-    each player and updates statistics. *)
-let bj_payout state win_msg loss_msg player_outcomes =
-  let players = state.players in
-  for i = 0 to state.player_num - 1 do
-    let player = List.nth players i in
-    let win = List.nth player_outcomes i in
-    pay_player state.currency win win_msg loss_msg player.name player;
-    update_player_stats player.name
-      (string_of_int player.money ^ " " ^ state.currency) state.name win
-  done; reset_bets state; state
-
-(** Plays the dealer's turn, draws until deck score exceeds 17 *)
-let bj_dealer_turn state = 
-  while bj_score dealer.hand < 17 do
-    deal dealer state;
-  done;
-  print_string [] "Dealer's hand is ";
-  dealer.hand |> Deck.string_of_deck |> print_endline;
-  bj_showdown state |> bj_payout state
-    "won against the dealer" "lost against the dealer"
+(** [choose_bet()] is a Baccarat outcome, banker, player, or tie, the player 
+    wants to bet on. Helper function for [bet_helper]. *)
+let rec choose_bet () =
+  print_endline bet_on_msg;
+  let n = read_line () |> String.trim |> String.lowercase_ascii in
+  match n with
+  | "banker" -> Banker
+  | "player" -> Player 
+  | "tie" -> Tie
+  | _ -> print_endline invalid_bet_on_msg; choose_bet ()
 
 (** [bet_helper player] is [player] with prompted bet amount assigned. *)
 let bet_helper (player : player) st = 
@@ -283,7 +261,36 @@ and invalid_protocol (engine : t -> t) (state : t) : t =
   print_endline invalid_command_msg;
   engine state 
 
-let rec bj_turn s : t =
+(************* Begin blackjack engine & helpers *************)
+
+(** [bj_payout state win_msg loss_msg player_outcomes] pays out each player in
+    [state] who wins with [win_msg] and charges each player who loses with
+    [loss_msg], whose victory or lack thereof is given by
+    the respective element of [player_outcomes]. It also prints the money for
+    each player and updates statistics. *)
+let bj_payout state win_msg loss_msg player_outcomes =
+  let players = state.players in
+  for i = 0 to state.player_num - 1 do
+    let player = List.nth players i in
+    let win = List.nth player_outcomes i in
+    pay_player state.currency win win_msg loss_msg player.name player;
+    update_player_stats player.name
+      (string_of_int player.money ^ " " ^ state.currency) state.name win
+  done; reset_bets state; state
+
+(** Plays the dealer's turn, draws until deck score exceeds 17 *)
+let bj_dealer_turn state = 
+  while bj_score dealer.hand < 17 do
+    deal dealer state;
+  done;
+  print_string [] "Dealer's hand is ";
+  dealer.hand |> Deck.string_of_deck |> print_endline;
+  bj_showdown state |> bj_payout state
+    "won against the dealer" "lost against the dealer"
+
+(** Prompts player to enter a command for their turn in Blackjack. Returns a 
+    [game_state] with the results of the blackjack turn applied.*)
+let rec bj_turn s =
   let active_player_index = s.turn in
   if active_player_index >= s.player_num then bj_dealer_turn s
   else
@@ -386,10 +393,12 @@ and bj_stand_protocol player state =
   bj_turn { state with turn = state.turn + 1 }
 
 and bj_double_protocol player state =
+  (* Check that player has not split before. *)
   if not_unique player state then begin
     print_endline not_unique_msg;
     bj_turn state
   end
+  (* Check player has sufficient money to double. *)
   else if player.bet <= player.money / 2 then begin
     player.bet <- player.bet * 2;
     deal player state;
@@ -399,22 +408,24 @@ and bj_double_protocol player state =
     bj_turn state
   end
 
+(************* End blackjack engine & helpers *************)
+
 (** [banker_ba st] is the player in gamestate [st] in a Baccarat game.  
-    Require: ba_players in [st] contains exactly two players. *)
+    Requires: ba_players in [st] contains exactly two players. *)
 let player_ba st = 
   match st.ba_players with 
   | [] -> failwith "Wrong number of ba_players"
   | h :: t -> h
 
 (** [banker_ba st] is the banker in gamestate [st] in a Baccarat game. 
-    Require: ba_players in [st] contains exactly two players. *)
+    Requires: ba_players in [st] contains exactly two players. *)
 let banker_ba st = 
   match st.ba_players with 
   | h :: h2 :: [] -> h2
   | _ -> failwith "Wrong number of ba_players"
 
 (** [third st] is rank of third carrd received by player. 
-    Require: the banker's hand in [st] has exactly three cards. *)
+    Requires: the banker's hand in [st] has exactly three cards. *)
 let third st = 
   let c = return (player_ba st).hand 1 |> of_deck in
   match c with 
@@ -552,6 +563,9 @@ let rec find_index_h x acc = function
 let find_index x lst =
   find_index_h x 0 lst
 
+(** [take_poker_command state] prompts the user to enter a poker command for 
+    their turn in a betting round of Texas Hold'em. Returns a game_state with 
+    the results of the betting round applied. *)
 let rec take_poker_command state = 
   if remaining_players_n state <= 1 then state
   else if all_maxed_bets state then state
@@ -704,6 +718,8 @@ let p_showdown s =
 let reenter_all s =
   List.iter (fun p -> p.in_game <- true) s.players; s
 
+(** [poker_turn s] calls for betting rounds and reveals flop cards according to
+    the rules of Texas Hold'em.  *)
 let poker_turn s =
   let p_game s =
     (* 1st betting round *)
@@ -717,6 +733,7 @@ let poker_turn s =
       let reset_state = {pre_flop_state with turn = 0} in
       print_endline "\nFlop round\n";
       let flop_state = take_poker_command reset_state in
+      (* Check at least 2 players remaining *)
       if remaining_players_n flop_state < 2 then flop_state
       else begin
         deal_n 1 flop_state flop_state.flop;
@@ -724,6 +741,7 @@ let poker_turn s =
         let reset_state = {flop_state with turn = 0} in
         print_endline "\nTurn round\n";
         let turn_state = take_poker_command reset_state in
+        (* Check at least 2 players remaining *)
         if remaining_players_n turn_state < 2 then turn_state
         else begin
           deal_n 1 turn_state turn_state.flop;
@@ -744,7 +762,11 @@ let update_currency s =
   let curr = read_line () in
   { s with currency = curr}
 
-
+(** [shared_init s init_bet has_dealer starting_cards turn] is a game state 
+    with number of decks, number of players, player names and initial bets 
+    (iff [init_bet] is true) taken from user responses to prompts. The state 
+    initializes a dealer iff [has_dealer] is true, and deals each player 
+    [starting_cards] cards. *)
 let shared_init s init_bet has_dealer starting_cards = 
 
   (* Select number of decks for game *)
@@ -761,7 +783,8 @@ let shared_init s init_bet has_dealer starting_cards =
   let s_with_decks = { (deck s n) with num_decks = n } in
   update_players num_players players s_with_decks |> update_currency
 
-(** [wipe_hands state] is [state] with all players' hands set to empty. *)
+(** [wipe_hands state] is [state] with all players' hands set to 
+    [Deck.empty]. *)
 let rec wipe_hands state = 
   let lst = state.players in
   match lst with
@@ -806,37 +829,125 @@ let eliminate_bankrupts state =
   { state with players = new_players; player_num = List.length new_players}
 
 (** Prompts for a yes or no response to whether another round is desired. *)
-let rec replay () = 
-  print_endline yes_or_no_prompt;
+let rec yes_or_no prompt = 
+  prompt |> print_endline;
   print_string [] input_prompt;
   let response = read_line () |> String.trim |> String.lowercase_ascii in
   if response = "y" then true else if response = "n" then false
   else begin 
     print_endline yes_or_no_reminder;
-    replay ()
+    yes_or_no prompt
   end
 
-let rec play_round init_bet has_dealer starting_cards state turn =
+type game_info = {
+  init_bet : bool;
+  has_dealer : bool;
+  initial_cards : int;
+  engine : t -> t;
+}
+
+let bj_info = {
+  init_bet = Blackjack.init_bet;
+  has_dealer = Blackjack.has_dealer;
+  initial_cards = Blackjack.initial_cards;
+  engine = bj_turn;
+}
+
+let poker_info = {
+  init_bet = Poker.init_bet;
+  has_dealer = Poker.has_dealer;
+  initial_cards = Poker.initial_cards;
+  engine = poker_turn
+}
+
+let ba_info = {
+  init_bet = Baccarat.init_bet;
+  has_dealer = Baccarat.has_dealer;
+  initial_cards = Baccarat.initial_cards;
+  engine = ba_turn
+}
+
+(** [info str] returns the [game_info] associated with the game name, [str]. 
+    Raises an error if [str] is not a supported game mode. *)
+let info str = 
+  if str = "blackjack" then bj_info
+  else if str = "poker" then poker_info
+  else if str = "baccarat" then ba_info
+  else failwith "An invalid game name was used in shared_init ()" 
+
+(** [get_meta state] prompts for gamemode name, and returns a tuple containing
+    corresponding metadata, as well as [state] with [name] updated to the 
+    gamemode entered by the user. *)
+let get_meta state = 
+  (* Select cardgame based on user input. *)
+  let s = set_gamemode state in
+  (* Display the rules of selected game. *)
+  Tools.view_rules s.name Player.default_player false;
+  print_endline "\n";
+
+  (* Determine if players can make initial bets, and if there is a dealer
+       for the selected game mode, and the number of cards each player begins 
+       with. *)
+  let game_info = info s.name in
+  let init_bet = game_info.init_bet
+  and has_dealer = game_info.has_dealer 
+  and starting_cards = game_info.initial_cards 
+  and engine = game_info.engine in
+  init_bet, has_dealer, starting_cards, engine, s
+
+(** [play_round init_bet has_dealer starting_cards state turn] enters a REPL 
+    defined by [turn]. Players are prompted to place bets before cards are 
+    dealt if [init_bet]. A dealer is assigned to the game if [has_dealer]. The
+    number of cards dealt to each player before the game begins is 
+    [starting cards]. *)
+let rec play_round init_bet has_dealer starting_cards turn state =
+
   (* Check if there are still any eligible players remaining. *)
   if state.player_num <= 0 then begin 
     print_endline no_players_left_msg;
     quit_protocol state
   end else
+
     (* Resets game turn, all players and community decks, and resets the main
        deck to its initial size. If the game mode permits betting before
        cards are dealt, bets are also obtained from StdIn. *)
     let new_state = refresh_state state init_bet in
-
     (* Deal cards to every player, then the dealer if there is one. *)
     deal_all new_state starting_cards has_dealer;
+    (* Update playcount of [state.name] *)
+    Tools.update_total_game_stats state.name;
 
+    (* Enter the REPL loop defined by [turn] to play the desired game, then 
+        re-add all players (in case of folding). *)
     let final_state = turn new_state |> reenter_all in
-
-    update_total_game_stats state.name;
-
-    (* Checks if the game shall run another round *)
-    let replay_wanted = replay () in
+    (* Checks if the game shall run another round. *)
+    let replay_wanted = repeat_game_msg state.name |> yes_or_no in
     if replay_wanted then begin
+
+      (* Eliminate bankrupt players, begin next round. *)
       let next_state = eliminate_bankrupts final_state in
-      play_round init_bet has_dealer starting_cards next_state turn 
-    end else display_final_scores final_state
+      play_round init_bet has_dealer starting_cards turn next_state
+      (* Checks if a different game is desired instead. *)
+
+    end else if yes_or_no change_game_msg then begin
+
+      (* Eliminate bankrupt players, prompt for new gamemode. *)
+      let next_state = eliminate_bankrupts final_state in
+      (* Prompts for new gamemode and updates metagame info. *)
+      let init, has_deal, start_cards, engine', state' = get_meta next_state in
+      (* Begins round of new gamemode. *)
+      play_round init has_deal start_cards engine' state'
+
+      (* Display final results & exit. *)
+    end else display_final_scores final_state 
+
+and game_constructor state =
+  (* Prompt user for desired gamemode and obtain required meta info. *)
+  let init, has_deal, start_cards, engine', state' = get_meta state in
+
+  (* Creates a game state with number of decks, number of players, player names 
+     and initial bets (if the game mode permits) *)
+  let state'' = shared_init state' init_bet has_dealer start_cards in
+
+  (* Begins the match loop *)
+  play_round init has_deal start_cards engine' state''

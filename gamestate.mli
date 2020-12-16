@@ -17,6 +17,18 @@ type t = {
   mutable ba_players : player list;
 }
 
+(** The abstract type representing meta game information for a given gamemode,
+    which includes whether you are allowed to bet before cards are dealt, and
+    if there exists a dealer, and the number of cards each player is dealt 
+    initially. It also contains the appropriate function for executing game
+    turns for the game mode. *)
+type game_info = {
+  init_bet : bool;
+  has_dealer : bool;
+  initial_cards : int;
+  engine : t -> t;
+}
+
 val default_game : t
 
 val default_currency : string
@@ -39,18 +51,6 @@ val bj_turn : t -> t
     results of the baccarat game applied. *)
 val ba_turn : t -> t
 
-(** [choose_game] is a game state with an empty deck, 1 player and game 
-    name equal to that entered if it is a supported game. If not, the player is
-    prompted to enter a valid game name again. *)
-val choose_game : unit -> t
-
-(** [shared_init s init_bet has_dealer starting_cards turn] is a game state 
-    with number of decks, number of players, player names and initial bets 
-    (iff [init_bet] is true) taken from user responses in StdIn. The state 
-    initializes a dealer iff [has_dealer] is true, and deals each player 
-    [starting_cards]. The game state returned is [s] mutated. *)
-val shared_init : t -> bool -> bool -> int -> t
-
-(** [play_round init_bet has_dealer starting_cards state turn] starts a round
-    with values given *)
-val play_round : bool -> bool -> int -> t -> (t -> t) -> unit
+(** [game_constructor state] prompts the player to select a gamemode and sets 
+    the metadata of state to match the game mode desired. *)
+val game_constructor : t -> unit
