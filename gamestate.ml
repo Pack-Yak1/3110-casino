@@ -39,7 +39,6 @@ let default_game = {
 
 let number_of_decks_msg = "Please enter the number of decks to play with. It \
                            must be a number greater than 0.\n"
-
 let invalid_p_msg = "You have entered an invalid number of players. Please \
                      enter a number greater than 0.\n"
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
@@ -146,7 +145,7 @@ let shared_init s init_bet has_dealer starting_cards =
   (* Create initial gamestate with values entered above *)
   let s_with_decks = { (start_deck s n) with num_decks = n } in
   let s_with_players = update_players num_players players s_with_decks in 
-  {s_with_players with currency = update_currency ()}
+  {s_with_players with currency = update_currency default_currency}
 
 (************* End state initializer (EVAL) & helpers *************)
 

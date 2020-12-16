@@ -53,10 +53,11 @@ let rec choose_bet () =
   | "tie" -> Tie
   | _ -> print_endline invalid_bet_on_msg; choose_bet ()
 
-let update_currency () =
+let update_currency default =
   print_endline currency_msg;
   print_string [] input_prompt;
-  read_line () 
+  let input = read_line () in
+  if input = "" then default else input
 
 let rec yes_or_no prompt = 
   prompt |> print_endline;
