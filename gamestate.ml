@@ -406,47 +406,48 @@ let rec bj_turn s =
     with
     | Invalid_command -> invalid_protocol bj_turn s
 
-and bj_split_protocol player state = 
+(** [check_illegal_split player state] is false if the player is allowed to
+    split. If it returns true, it prints a helpful message explaining why the
+    player cannot split. *)
+and check_illegal_split player state = 
   (* Checks that player has not split before *)
-  if not_unique player state then begin
-    print_endline not_unique_msg;
-    bj_turn state
-  end
+  if not_unique player state then begin print_endline not_unique_msg; true end
   (* Checks that player has exactly 2 cards *)
   else if Deck.length player.hand <> 2 
-  then begin
-    print_endline non_2_card_split_msg;
-    bj_turn state
-  end
+  then begin print_endline non_2_card_split_msg; true end 
   else if player.bet > player.money / 2 then begin
     print_endline not_enough_to_split_msg;
-    bj_turn state
-  end else let hand = player.hand in
-    (* Check cards have equal score in blackjack *)
+    true
+  end else begin
+    let hand = player.hand in
     match pick hand 0, pick hand 1 with
     | Some c1, Some c2 -> begin
         let d1, d2 = make_deck [c1], make_deck [c2] in
         if bj_score d1 <> bj_score d2 
-        then begin
-          print_endline unequal_split_msg;
-          bj_turn state
-        end
-        else begin
-          (* Split is legal; begin to split and top up original player hand *)
-          player.hand <- d1; 
-          deal player state;
-          (* Create split's hand and dummy player *)
-          let name' = player.name ^ " " ^ copy_suffix in
-          let copy = 
-            {Player.default_player with name = name'; hand = d2; 
-                                        bet = player.bet; money = 0} in
-          (* Top up dummy player's hand *)
-          deal copy state;
-          (* Adds the dummy player to turn order and increments player_num *)
-          insert_clone player state copy
-        end
+        then begin print_endline unequal_split_msg; true end
+        else false
       end
     | _ -> failwith "impossible, player must have 2 cards"
+  end
+
+and bj_split_protocol player state = 
+  if check_illegal_split player state then bj_turn state 
+  else begin
+    (* Split is legal; begin to split and top up original player hand *)
+    let d1, d2 = split player.hand in
+    player.hand <- d1; 
+    deal player state;
+    (* Create split's hand and dummy player *)
+    let name' = player.name ^ " " ^ copy_suffix in
+    let copy = 
+      {Player.default_player with name = name'; hand = d2; 
+                                  bet = player.bet; money = 0} in
+    (* Top up dummy player's hand *)
+    deal copy state;
+    (* Adds the dummy player to turn order and increments player_num *)
+    insert_clone player state copy
+  end
+
 
 (** [insert_clone player state copy] is [bj_turn] called on [state], with 
     [state.player_num] incremented by one, and [copy] inserted to 
@@ -621,14 +622,17 @@ let ba_turn s =
 
 (************* Begin poker engine (REPL) & helpers *************)
 
+(** [instant_end state] is true if the game is in a state where the betting
+    round of poker should end. *)
+let rec instant_end state = 
+  if remaining_players_n state <= 1 || all_maxed_bets state then true
+  else all_bets_matched state && state.turn > (state.player_num - 1)
+
 (** [take_poker_command state] prompts the user to enter a poker command for 
     their turn in a betting round of Texas Hold'em. Returns a game_state with 
     the results of the betting round applied. *)
-let rec take_poker_command state = 
-  if remaining_players_n state <= 1 then state
-  else if all_maxed_bets state then state
-  else if all_bets_matched state && state.turn > (state.player_num - 1)
-  then state
+and take_poker_command state = 
+  if instant_end state then state
   else begin 
     let player_index = state.turn mod state.player_num in
     let p = List.nth state.players player_index in

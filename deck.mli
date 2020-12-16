@@ -141,6 +141,11 @@ val concat : t -> t -> t
     [concat d1 d2]. *)
 val stable_concat : t -> t -> t
 
+(** [split deck] is a tuple of [d1], [d2] where [d1] is a deck containing
+    the 1st card, and [d2] is a deck containing the second card. 
+    Requires: [length deck] is 2 *)
+val split : t -> t * t
+
 (** [string_of_card card] is a 2-character string representing [card]. The
     first character is the suit, and the second character is the rank. *)
 val string_of_card : card -> string
