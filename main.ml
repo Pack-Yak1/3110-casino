@@ -8,10 +8,6 @@ open Player
 open Gamestate
 open Poker
 
-type player = Player.t
-
-type game_state = Gamestate.t
-
 (* Begin ingame prompts: *)
 let input_prompt = "> "
 let welcome_msg = "\n\nWelcome to the 3110 Casino.\n"

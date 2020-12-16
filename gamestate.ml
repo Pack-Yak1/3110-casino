@@ -72,6 +72,7 @@ let not_unique_msg = "You cannot double down or split because you have already\
 let non_2_card_split_msg = "You can only split if you have exactly 2 cards.\n"
 let unequal_split_msg = "You can only split if both your cards have the same \
                          value.\n"
+let not_enough_to_split_msg = "You do not have enough money to split.\n"
 (** [turn_msg n] is a string prompt for the [n-th] user to enter their
     command. *)
 let turn_msg (state : t) n = 
@@ -417,7 +418,10 @@ and bj_split_protocol player state =
     print_endline non_2_card_split_msg;
     bj_turn state
   end
-  else let hand = player.hand in
+  else if player.bet > player.money / 2 then begin
+    print_endline not_enough_to_split_msg;
+    bj_turn state
+  end else let hand = player.hand in
     (* Check cards have equal score in blackjack *)
     match pick hand 0, pick hand 1 with
     | Some c1, Some c2 -> begin
@@ -433,11 +437,9 @@ and bj_split_protocol player state =
           deal player state;
           (* Create split's hand and dummy player *)
           let name' = player.name ^ " " ^ copy_suffix in
-          let hand' = d2 in
-          let bet' = player.bet in
-          let money' = 0 in
-          let copy = {Player.default_player with name = name'; hand = hand'; 
-                                                 bet = bet'; money = money'} in
+          let copy = 
+            {Player.default_player with name = name'; hand = d2; 
+                                        bet = player.bet; money = 0} in
           (* Top up dummy player's hand *)
           deal copy state;
           (* Adds the dummy player to turn order and increments player_num *)
@@ -593,6 +595,8 @@ let ba_showdown outcome st =
       (string_of_int player.money ^ " " ^ st.currency) st.name win
   done; reset_bets st; st
 
+(** Plays a game of baccarat and returns a game_state with the results of the
+    game applieed. *)
 let ba_turn s =
   let banker = {default_player with name = "banker"} in
   let player =  {default_player with name = "player"} in
@@ -811,6 +815,12 @@ let poker_turn s =
 (************* End poker engine (REPL) & helpers *************)
 
 (************* Begin valid [game_info] values *************)
+
+(** The abstract type representing meta game information for a given gamemode,
+    which includes whether you are allowed to bet before cards are dealt, and
+    if there exists a dealer, and the number of cards each player is dealt 
+    initially. It also contains the appropriate function for executing game
+    turns for the game mode. *)
 type game_info = {
   init_bet : bool;
   has_dealer : bool;
