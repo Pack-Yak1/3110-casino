@@ -1,1 +1,3 @@
-true: package(ounit2),package(ANSITerminal),package(yojson)
+<{deck,blackjack,poker}.ml>: coverage
+<test.{byte,native}>: coverage
+true: package(ounit2),package(ANSITerminal),package(yojson), package(bisect_ppx)

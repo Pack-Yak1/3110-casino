@@ -123,12 +123,12 @@ val rank_filter : rank -> t -> t
     Requires: [cards] must contain exactly seven cards. *)
 val flush : t -> t
 
-(** [straigth cards] is five cards in [cards] with greatest consecutive rank 
+(** [straight cards] is five cards in [cards] with greatest consecutive rank 
     value.
     Requires: [cards] must contain exactly seven cards. *)
 val straight : t -> t
 
-(** [straigth cards] is cards in [cards] that is both flush and straight.
+(** [straight cards] is cards in [cards] that is both flush and straight.
     Requires: [cards] must contain exactly seven cards. *)
 val straight_flush : t -> t
 

@@ -118,6 +118,10 @@ let test_straight_flush name deck expected_output =
       assert_equal expected_output (straight_flush deck)
         ~printer: string_of_deck)
 
+let test_ba_score name deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (ba_score deck) ~printer:string_of_int)
+
 let c1 = make_card S 2
 let c2 = make_card H 3
 let c3 = make_card C 4
@@ -203,6 +207,15 @@ let p45 = make_card D 6
 let p46 = make_card D 7
 let p48 = make_card D 9
 let p49 = make_card D 10
+
+let d10 = make_deck [c8; c13]
+let d11 = make_deck [c4; c13]
+let d12 = make_deck [p9; p11]
+let d13 = make_deck [p8; p9]
+let d14 = make_deck [p41; p42]
+let d15 = make_deck [p23; p30]
+let d16 = make_deck [p5; p8; p9]
+let d17 = make_deck [p26; p42; p1]
 
 (* S3, CJ, SQ, D3, S2, S10, D2 *)
 let l1 = make_deck [p3; p37; p12; p42; p2; p10; p41]
@@ -362,6 +375,16 @@ let deck_tests = "Deck test suite" >::: [
     test_straight_flush "flush only" l9 d5;
     test_straight_flush "straight flush" l12 l12';
     test_straight_flush "royal flush" l11 l11';
+
+    test_ba_score "Ace and 6 = 7" d10 7; 
+    test_ba_score "5 and 6 = 1" d11 1;
+    test_ba_score "9 and J = 9" d12 9;
+    test_ba_score "8 and 9 = 7" d13 7;
+    test_ba_score "2 and 3 = 5" d14 5;
+    test_ba_score "10 and 4 = 4" d15 4;
+    test_ba_score "5 and 8 and 9 = 2" d16 2;
+    test_ba_score "Q and 3 and Ace = 4" d17 4;
+    test_ba_score "empty deck" d5 0;
   ]
 
 (** [bj_win_check_test name outcome player_score exp] constructs an OUnit
@@ -421,7 +444,6 @@ let poker_tests = "Poker test suite" >::: [
     test_cmp_hand "two different flush" l9 l26 Lesser;
     test_cmp_hand "two different straight" l13 l27 Greater;
   ]
-
 
 let suite =
   "test suite for Deck, Blackjack, and Poker"  >::: [
