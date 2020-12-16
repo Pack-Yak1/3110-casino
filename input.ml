@@ -7,7 +7,7 @@ let game_seln_msg = "Please enter the name of the game you want to play: \
 let no_such_game_msg = "You entered an invalid game name. Please try again.\n"
 let no_entry_msg = "Please enter a number.\n"
 let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
-                  'banker' or 'player'or 'tie'. \n"
+                  'banker' or 'player' or 'tie'. \n"
 let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
                           enter either 'banker' or 'player' or 'tie' \n"
 let currency_msg = "Please enter your unit of currency.\n"

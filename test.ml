@@ -1,3 +1,35 @@
+(*
+Tools:
+We could not unit test the Tools modules because the exposed functions
+involve printing, modifying files, and changing player settings. As a result,
+we playtested each function throughout different points of gameplay and in
+different gameplay scenarios.
+
+Main, Gamestate:
+We could not unit test these modules because their exposed functions
+are mainly game engines. Thus, we playtested each game.
+TODO below
+Blackjack game:
+Poker game:
+Baccarat game:
+
+Player:
+Playtested with Main, Gamestate.
+
+Command, Input:
+Similarly, we could not unit test these modules because they take and parse
+user input. We playtested by testing many inputs, using a glass-box
+approach to reach every possible branch.
+
+Deck, Blackjack, Poker:
+We used OUnit to test these modules.
+TODO
+
+Baccarat:
+TODO
+*)
+
+
 open OUnit2
 open Deck
 open Blackjack
