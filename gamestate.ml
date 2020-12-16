@@ -5,6 +5,7 @@ open Blackjack
 open Command
 open Tools
 open Baccarat
+open Input
 
 type player = Player.t
 
@@ -21,8 +22,6 @@ type t = {
 }
 
 let default_currency = "USD"
-let currency_msg = "Please enter your unit of currency.\n"
-
 
 let default_game = {
   name = "";
@@ -37,13 +36,10 @@ let default_game = {
 }
 
 (************* Begin prompts & messages *************)
-let input_prompt = "> "
-let game_seln_msg = "Please enter the name of the game you want to play: \
-                     Blackjack, Poker, Baccarat.\n"
-let no_such_game_msg = "You entered an invalid game name. Please try again.\n"
+
 let number_of_decks_msg = "Please enter the number of decks to play with. It \
                            must be a number greater than 0.\n"
-let no_entry_msg = "Please enter a number.\n"
+
 let invalid_p_msg = "You have entered an invalid number of players. Please \
                      enter a number greater than 0.\n"
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
@@ -63,17 +59,12 @@ let invalid_command_msg = "You have entered an invalid command. Please try \
                            again.\n"
 let invalid_check_msg = "A player has already opened the betting round. You \
                          may no longer check.\n"
-let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
-                  'banker' or 'player'or 'tie'. \n"
-let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
-                          enter either 'banker' or 'player' or 'tie' \n"
 let copy_suffix = "(copy)"
 let not_unique_msg = "You cannot double down or split because you have already\
                       split this round.\n"
 let non_2_card_split_msg = "You can only split if you have exactly 2 cards.\n"
 let unequal_split_msg = "You can only split if both your cards have the same \
                          value.\n"
-
 (** [turn_msg n] is a string prompt for the [n-th] user to enter their
     command. *)
 let turn_msg (state : t) n = 
@@ -82,85 +73,13 @@ let turn_msg (state : t) n =
 let repeat_game_msg game_name = 
   "\nDo you wish to play another round of " ^ game_name ^ "? (y/n)"
 let change_game_msg = "\nWould you like to play a different game then? (y/n)"
-let yes_or_no_reminder = "Please enter either 'y' or 'n'.\n"
 let final_score_header = "\nFinal Scores:\n"
 let no_players_left_msg = "There are no players left in the game."
 let elimination_msg name = 
   name ^ " is bankrupt and has been eliminated.\n"
 let goodbye_msg = "Goodbye!"
+
 (************* End prompts & messages *************)
-
-(** List of names of supported games. *)
-let games = ["blackjack"; "poker"; "baccarat"]
-
-(************* Begin parsing (READ) functions *************)
-
-(** [get_gamemode state] is [state] the field [name] set to a game name from 
-    player input, if the player inputs a supported game name. If not, the 
-    player is prompted to enter a valid game name again. *)
-let rec get_gamemode () =
-  print_endline game_seln_msg;
-  print_string [] input_prompt;
-  let name = read_line () |> String.trim |> String.lowercase_ascii in 
-  if List.mem name games then name 
-  else begin 
-    print_endline no_such_game_msg; 
-    get_gamemode () 
-  end
-
-(** [choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit]
-    prompts the player to enter an int greater than 0 (and possibly less than
-    or equal to [cap], depending on [exists_limit]) by printing
-    [initial_prompt]. If the input is not greater than 0, or if the input is
-    greater than [cap] and [exists_limit] is true, it prints [invalid_msg]. *)
-let rec choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit = 
-  print_endline initial_prompt;
-  print_string [] input_prompt;
-  let n = read_line () |> int_of_string_opt in
-  match n with
-  | Some num ->
-    if exists_limit then
-      if num > 0 && num <= cap then num else begin
-        print_endline invalid_msg;
-        choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
-      end else
-    if num > 0 then num else begin
-      print_endline invalid_msg;
-      choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
-    end
-  | None -> print_endline no_entry_msg;
-    choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
-
-(** [choose_bet()] is a Baccarat outcome, banker, player, or tie, the player 
-    wants to bet on. *)
-let rec choose_bet () =
-  print_endline bet_on_msg;
-  let n = read_line () |> String.trim |> String.lowercase_ascii in
-  match n with
-  | "banker" -> Banker
-  | "player" -> Player 
-  | "tie" -> Tie
-  | _ -> print_endline invalid_bet_on_msg; choose_bet ()
-
-(** [update_currency ()] prompts for a currency to be used in casino and 
-    returns the user's choice. *)
-let update_currency () =
-  print_endline currency_msg;
-  print_string [] input_prompt;
-  read_line () 
-
-(** Prompts for a yes or no response to whether another round is desired. *)
-let rec yes_or_no prompt = 
-  prompt |> print_endline;
-  print_string [] input_prompt;
-  let response = read_line () |> String.trim |> String.lowercase_ascii in
-  if response = "y" then true else if response = "n" then false
-  else begin 
-    print_endline yes_or_no_reminder;
-    yes_or_no prompt
-  end
-
-(************* End parsing (READ) functions *************)
 
 (************* Begin display (PRINT) functions *************)
 
@@ -183,7 +102,7 @@ let start_turn state player =
   end else ();
   player |> turn_msg state |> print_endline;
   print_hand state player;
-  print_string ((List.nth state.players player).style) input_prompt
+  print_string ((List.nth state.players player).style) Input.input_prompt
 
 (** [display_final_scores state] prints the final scores of all players
     in [state]. *)
@@ -293,10 +212,10 @@ let find_index x lst =
 let assign_single_bet (player : player) st = 
   let msg = bet_msg player.name in
   let bet =
-    choose_num_geq_1_leq_n msg invalid_bet_msg player.money true in
+    Input.choose_num_geq_1_leq_n msg invalid_bet_msg player.money true in
   let p = { player with bet = bet } in 
   if st.name = "baccarat" then 
-    let b = choose_bet () in {p with bet_on = b}
+    let b = Input.choose_bet () in {p with bet_on = b}
   else p
 
 (** [assign_bets_helper lst n acc] is a list of all [n] players in [lst] with 
@@ -787,7 +706,7 @@ and p_raise_protocol player state =
     print_string player.style bet_over_money_msg;
     take_poker_command state;
   end else
-    let bet = choose_num_geq_1_leq_n (bet_msg player.name)
+    let bet = Input.choose_num_geq_1_leq_n (bet_msg player.name)
         invalid_bet_msg 0 false in
     let can_bet = player.money - previous_bet in
     if bet > can_bet then begin
@@ -952,7 +871,7 @@ let info str =
     gamemode entered by the user. *)
 let get_meta state = 
   (* Select cardgame based on user input. *)
-  let s = {state with name = get_gamemode ()} in
+  let s = {state with name = Input.get_gamemode ()} in
   (* Display the rules of selected game. *)
   Tools.view_rules s.name Player.default_player false;
   print_endline "\n";
@@ -997,7 +916,7 @@ let rec play_round init_bet has_dealer starting_cards turn state =
         re-add all players (in case of folding). *)
     let final_state = turn new_state |> reenter_all in
     (* Checks if the game shall run another round. *)
-    let replay_wanted = repeat_game_msg state.name |> yes_or_no in
+    let replay_wanted = repeat_game_msg state.name |> Input.yes_or_no in
     if replay_wanted then begin
 
       (* Eliminate bankrupt players, begin next round. *)
@@ -1005,7 +924,7 @@ let rec play_round init_bet has_dealer starting_cards turn state =
       play_round init_bet has_dealer starting_cards turn next_state
       (* Checks if a different game is desired instead. *)
 
-    end else if yes_or_no change_game_msg then begin
+    end else if Input.yes_or_no change_game_msg then begin
 
       (* Eliminate bankrupt players, prompt for new gamemode. *)
       let next_state = eliminate_bankrupts final_state in
