@@ -2,6 +2,7 @@
 #require "ANSITerminal";;
 #require "yojson";;
 #directory "_build";;
+#require "bisect_ppx.runtime";;
 #load_rec "deck.cmo";;
 #load_rec "command.cmo";;
 #load_rec "main.cmo";;
