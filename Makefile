@@ -19,9 +19,9 @@ test:
 	BISECT_COVERAGE=YES $(OCAMLBUILD) -tag 'debug' $(TEST) && ./$(TEST) -runner sequential
 
 docs: build
-	mkdir -p doc.private
+	mkdir -p doc.public
 	ocamlfind ocamldoc -I _build -package ANSITerminal\
-		-html -stars -d doc.private \
+		-html -stars -d doc.public \
 		-inv-merge-ml-mli -m A $(MLIS) $(MLS)
 
 bisect: clean test
@@ -32,4 +32,4 @@ zip:
 
 clean:
 	ocamlbuild -clean
-	rm -rf doc.private src.zip _coverage bisect*.coverage
+	rm -rf doc.private doc.public src.zip _coverage bisect*.coverage
