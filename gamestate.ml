@@ -206,7 +206,8 @@ let payout state win_msg loss_msg player_outcomes =
   for i = 0 to state.player_num - 1 do
     let player = List.nth players i in
     pay_player state.currency (List.nth player_outcomes i) win_msg loss_msg
-      player.name player; reset_bets state
+      player.name player; (** <-- check for copy in [player.name] *) 
+    reset_bets state
   done; state
 
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
@@ -263,10 +264,15 @@ let rec bj_turn s : t =
       | Hit -> bj_hit_protocol active_player s 
       | Stand -> bj_stand_protocol active_player s 
       | Double -> bj_double_protocol active_player s
+      | Split -> bj_split_protocol active_player s
       | Quit -> quit_protocol s
       | Tools -> Tools.show_menu s.name active_player; bj_turn s
     with
     | Invalid_command -> invalid_protocol bj_turn s
+
+(** [state.player_num] increases *)
+and bj_split_protocol player state = 
+  failwith "todo"
 
 and bj_hit_protocol player state = 
   deal player state;

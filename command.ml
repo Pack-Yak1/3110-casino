@@ -2,6 +2,7 @@ type bj_command =
   | Hit 
   | Stand
   | Double
+  | Split
   | Quit
   | Tools
 
@@ -23,6 +24,7 @@ let parse_bj str =
   | "stand" -> Stand
   | "double down"
   | "double" -> Double
+  | "split" -> Split
   | "quit" -> Quit
   | "tools" -> Tools
   | _ -> raise Invalid_command
