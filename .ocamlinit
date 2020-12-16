@@ -10,3 +10,4 @@
 #load_rec "poker.cmo";;
 #load_rec "player.cmo";;
 #load_rec "gamestate.cmo";;
+#load_rec "baccarat.cmo";;

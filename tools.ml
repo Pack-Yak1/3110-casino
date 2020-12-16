@@ -17,10 +17,17 @@ type tools_command =
 let input_prompt = "> "
 
 (** Valid commands for each game. *)
-let blackjack_rules = "Rules\n Hit: Take another card from the dealer.\n \
-                       Stand: Take no more cards.\n Double down: Double your \
-                       bet and commit to standing after one more hit.\n Quit: \
-                       Quit the game.\n Tools: View or edit settings and \
+let blackjack_rules = "Rules\nHit: Take another card from the dealer.\n\
+                       Stand: Take no more cards.\nDouble down: Double your \
+                       bet and commit to standing after one more hit.\nSplit: \
+                       Split your hand into two and take one more card for \
+                       each new hand, placing a bet equal to your first on \
+                       the second hand. All 10-value cards are treated the \
+                       same. Further splitting of post-split hands is not \
+                       allowed. Doubling post-split hands is not allowed. \
+                       An ace and ten value card after a split are counted \
+                       as a blackjack.\nQuit: \
+                       Quit the game.\nTools: View or edit settings and \
                        rules."
 let poker_rules = "Rules\nCheck: Decline to bet. You keep your hand but do \
                    not open.\n\

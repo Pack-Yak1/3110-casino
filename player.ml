@@ -79,6 +79,15 @@ let add_new_player_stats name =
     |> Yojson.Basic.to_file "stats.json"
   | _ -> failwith "wrong json format"
 
+(** [ends_x x s] is [true] iff [s] contains [x] as a suffix. *)
+let ends_x x s =
+  let sub_safe super start len sub =
+    try let substring = String.sub super start len in substring = sub with
+    | Invalid_argument _ -> false in
+  let len_s = String.length s in
+  let len_x = String.length x in
+  let start = len_s - len_x in
+  sub_safe s start len_x x
 
 (** [player_helper n names] takes a string from std input, and returns a 
     new player with an empty deck, default money, name equal to the entered 
@@ -90,6 +99,9 @@ let rec player_helper n names =
   let name = read_line () in
   if List.mem name names then begin
     print_endline "Cannot use the same name as another player.\n";
+    player_helper n names end else
+  if ends_x "(copy)" name then begin
+    print_endline {|Cannot use "(copy)" at the end of a name.\n|};
     player_helper n names end else
     begin (add_new_player_stats name);
       { default_player with name = name }, (name :: names)
