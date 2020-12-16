@@ -12,7 +12,7 @@ type t = {
   name : string;
   mutable game_deck : Deck.t;
   mutable flop : player;
-  player_num : int;
+  mutable player_num : int;
   turn : int;
   mutable players : player list;
   currency : string;
@@ -43,7 +43,7 @@ let game_seln_msg = "Please enter the name of the game you want to play: \
 let no_such_game_msg = "You entered an invalid game name. Please try again.\n"
 let number_of_decks_msg = "Please enter the number of decks to play with. It \
                            must be a number greater than 0.\n"
-let no_entry_msg = "Please enter a number."
+let no_entry_msg = "Please enter a number.\n"
 let invalid_p_msg = "You have entered an invalid number of players. Please \
                      enter a number greater than 0.\n"
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
@@ -62,11 +62,18 @@ let invalid_double_msg = "You do not have enough money to double."
 let invalid_command_msg = "You have entered an invalid command. Please try \
                            again.\n"
 let invalid_check_msg = "A player has already opened the betting round. You \
-                         may no longer check."
+                         may no longer check.\n"
 let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
                   'banker' or 'player'or 'tie'. \n"
 let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
                           enter either 'banker' or 'player' or 'tie' \n"
+let copy_suffix = "(copy)"
+let copy_suffix_len = String.length copy_suffix
+let not_unique_msg = "You cannot double down or split because you have already\
+                      split this round.\n"
+let non_2_card_split_msg = "You can only split if you have exactly 2 cards.\n"
+let unequal_split_msg = "You can only split if both your cards have the same \
+                         value.\n"
 
 (** [turn_msg n] is a string prompt for the [n-th] user to enter their
     command. *)
@@ -290,9 +297,83 @@ let rec bj_turn s : t =
     with
     | Invalid_command -> invalid_protocol bj_turn s
 
-(** [state.player_num] increases *)
 and bj_split_protocol player state = 
-  failwith "todo"
+  (* Checks that player has not split before *)
+  if not_unique player state then begin
+    print_endline not_unique_msg;
+    bj_turn state
+  end
+  (* Checks that player has exactly 2 cards *)
+  else if Deck.length player.hand <> 2 
+  then begin
+    print_endline non_2_card_split_msg;
+    bj_turn state
+  end
+  else let hand = player.hand in
+    (* Check cards have equal score in blackjack *)
+    match pick hand 0, pick hand 1 with
+    | Some c1, Some c2 -> begin
+        let d1, d2 = make_deck [c1], make_deck [c2] in
+        if bj_score d1 <> bj_score d2 
+        then begin
+          print_endline unequal_split_msg;
+          bj_turn state
+        end
+        else begin
+          (* Split is legal; begin to split and top up original player hand *)
+          player.hand <- d1; 
+          deal player state;
+          (* Create split's hand and dummy player *)
+          let name' = player.name ^ " " ^ copy_suffix in
+          let hand' = d2 in
+          let bet' = player.bet in
+          let money' = 0 in
+          let copy = {Player.default_player with name = name'; hand = hand'; 
+                                                 bet = bet'; money = money'} in
+          (* Top up dummy player's hand *)
+          deal copy state;
+          (* Adds the dummy player to turn order and increments player_num *)
+          insert_clone player state copy
+        end
+      end
+    | _ -> failwith "impossible, player must have 2 cards"
+
+(** [insert_clone player state copy] is [bj_turn] called on [state], with 
+    [state.player_num] incremented by one, and [copy] inserted to 
+    [state.players] after the occurance of [player]. 
+    Requires: [player] is an element of [state.players] *)
+and insert_clone player state copy = 
+  state.player_num <- state.player_num + 1;
+  let player_list = state.players in
+  let player_list' = insert_after player player_list copy in
+  let state' = {state with players = player_list'} in
+  bj_turn state'
+
+(** [insert_after p lst copy] is [copy] inserted to [lst] after the occurance
+    of [p] in [lst].
+    Requires: [p] is an element of [lst] *)
+and insert_after p lst copy = 
+  match lst with
+  | [] -> raise Not_found
+  | h :: t -> if h = p then h :: copy :: t else h :: insert_after p t copy
+
+(** [is_copy] player is true if [player.name] ends with [copy_suffix], else
+    it is false. *)
+and is_copy (player : Player.t) =
+  Player.ends_x copy_suffix player.name
+
+(** [has_copy player state] is true if [state.players] contains a copy of
+    [player].  *)
+and has_copy (player : Player.t) state = 
+  let check = player.name ^ " " ^ copy_suffix in
+  List.filter (fun (p : Player.t) -> p.name = check) state.players
+  |> List.length 
+  |> ( <> ) 0
+
+(** [not_unique player state] is true if [player] has a copy or is itself a 
+    copy. *)
+and not_unique player state = 
+  has_copy player state || is_copy player
 
 and bj_hit_protocol player state = 
   deal player state;
@@ -303,7 +384,11 @@ and bj_stand_protocol player state =
   bj_turn { state with turn = state.turn + 1 }
 
 and bj_double_protocol player state =
-  if player.bet <= player.money / 2 then begin
+  if not_unique player state then begin
+    print_endline not_unique_msg;
+    bj_turn state
+  end
+  else if player.bet <= player.money / 2 then begin
     player.bet <- player.bet * 2;
     deal player state;
     bj_stand_protocol player state
@@ -452,7 +537,7 @@ let all_bets_matched state =
     shifted up by [acc], the number of elements in the list of interest
     preceding [lst]. If not in [lst], behavior is unspecified. *)
 let rec find_index_h x acc = function
-  | [] -> failwith "Not found"
+  | [] -> raise Not_found
   | h :: t -> if h = x then acc else find_index_h x (acc + 1) t
 
 (** [find_index x lst] is the index of [x] in [lst] if it is present.
@@ -569,7 +654,8 @@ and p_fold_protocol player state =
   take_poker_command {state with turn = state.turn + 1}
 
 (** [p_winners players s] is a list of winners in remaining [players] at the 
-    end of a game of poker in [s]. *)
+    end of a game of poker in [s].
+    Requires: [players] is a non-empty list. *)
 let p_winners players s =
   if List.length players = 1 then players
   else let hi_lo_sorted_p =
@@ -577,7 +663,7 @@ let p_winners players s =
          |> List.sort (fun (_, h1) (_, h2) -> -(Poker.cmp_hand h1 h2)) in
     let rec top_n lst acc =
       match lst with
-      | [] -> failwith "cannot have 0 players"
+      | [] -> failwith "impossible, cannot have 0 players"
       | [(p, h)] -> p :: acc
       | (p1, h1) :: (p2, h2) :: t ->
         if Poker.cmp_hand h1 h2 = 0 then top_n ((p2, h2) :: t) (p1 :: acc)
