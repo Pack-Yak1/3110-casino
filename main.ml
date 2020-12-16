@@ -20,7 +20,7 @@ let welcome_msg = "\n\nWelcome to the 3110 Casino.\n"
 (** [main ()] welcomes the player and initializes the game constructor*)
 let main () = 
   print_string [] welcome_msg;
-  Gamestate.game_constructor Gamestate.default_game
+  Gamestate.default_game |> Gamestate.game_constructor
 
 (* Execute the game engine. *)
 let () = main ()
