@@ -1,4 +1,4 @@
-MODULES=deck command main blackjack authors tools poker player gamestate baccarat
+MODULES=deck command main blackjack authors tools poker player gamestate baccarat input
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)
@@ -32,4 +32,4 @@ zip:
 
 clean:
 	ocamlbuild -clean
-	rm -rf doc.private src.zip _coverage bisect*.coverage
+	rm -rf doc.private doc.public src.zip _coverage bisect*.coverage
