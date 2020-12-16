@@ -28,4 +28,14 @@ val view_rules : string -> player -> bool -> unit
 
 (** Displays statistics for [player] for past games, then returns to
     the game with name [game]. *)
-val view_statistics : string -> player -> unit
+val view_stats : string -> player -> unit
+
+(** [update_total_game_stats game] adds 1 to the number of plays of the game
+    with case-insensitive name [name]. *)
+val update_total_game_stats : string -> unit
+
+(** [update_player_stats name money game win] sets the money to [money] and
+    increments the number of plays of the game with name [game] for
+    the player with name [name]. Iff [win] is true, the number of wins is
+    incremented.*)
+val update_player_stats : string -> string -> string -> bool -> unit

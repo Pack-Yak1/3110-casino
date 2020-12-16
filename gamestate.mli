@@ -13,7 +13,8 @@ type t = {
   turn : int;
   mutable players : player list;
   currency : string;
-  num_decks : int
+  num_decks : int;
+  mutable ba_players : player list;
 }
 
 val default_game : t
@@ -32,6 +33,11 @@ val poker_turn : t -> t
     to automatically begin the next action. Returns a game_state with the 
     results of the blackjack game applied. *)
 val bj_turn : t -> t
+
+(** Determines whose turn it is, then prompts and takes a command. Recurses
+    to automatically begin the next action. Returns a game_state with the 
+    results of the baccarat game applied. *)
+val ba_turn : t -> t
 
 (** [choose_game] is a game state with an empty deck, 1 player and game 
     name equal to that entered if it is a supported game. If not, the player is

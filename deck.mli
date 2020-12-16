@@ -104,6 +104,12 @@ val remainder : t -> t
     card), then [bj_score deck] is -1 to signify its unique value. *)
 val bj_score : t -> int
 
+(** [ba_score deck] is the integer score of [deck] in a game of Baccarat. 10, 
+    Jack, queen, and king have 0 point value. Ace has 1 point. Others worth 
+    their face value. Hands worth its unit digit of the sum of value of cards 
+    in deck. *)
+val ba_score : t -> int
+
 (** [rank_of_pair cards] is the rank of first pair in [cards]. Return None if
     there is no pair in [cards] 
     Requires: [cards] must be sorted on rank. *)
