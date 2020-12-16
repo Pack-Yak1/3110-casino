@@ -374,31 +374,6 @@ let bj_dealer_turn state =
   while bj_score dealer.hand < 17 do
     deal dealer state;
   done;
-  print_string [] "\nDealer's hand is ";
-  dealer.hand |> Deck.string_of_deck |> print_endline;
-  bj_showdown state |> bj_payout state
-    "won against the dealer" "lost against the dealer"
-
-(** [bj_payout state win_msg loss_msg player_outcomes] pays out each player in
-    [state] who wins with [win_msg] and charges each player who loses with
-    [loss_msg], whose victory or lack thereof is given by
-    the respective element of [player_outcomes]. It also prints the money for
-    each player and updates statistics. *)
-let bj_payout state win_msg loss_msg player_outcomes =
-  let players = state.players in
-  for i = 0 to state.player_num - 1 do
-    let player = List.nth players i in
-    let win = List.nth player_outcomes i in
-    pay_player state.currency win win_msg loss_msg player.name player;
-    update_player_stats player.name
-      (string_of_int player.money ^ " " ^ state.currency) state.name win
-  done; reset_bets state; state
-
-(** Plays the dealer's turn, draws until deck score exceeds 17 *)
-let bj_dealer_turn state = 
-  while bj_score dealer.hand < 17 do
-    deal dealer state;
-  done;
   print_string [] "Dealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
   bj_showdown state |> bj_payout state
@@ -542,7 +517,7 @@ let banker_ba st =
   | h :: h2 :: [] -> h2
   | _ -> failwith "Wrong number of ba_players"
 
-(** [third st] is rank of third carrd received by player. 
+(** [third st] is rank of third card received by player. 
     Requires: the banker's hand in [st] has exactly three cards. *)
 let third st = 
   let c = return (player_ba st).hand 1 |> of_deck in
@@ -551,9 +526,9 @@ let third st =
   | _ ->  failwith "Wrong number of cards"
 
 let ba_helper st = 
-  print_string [] "Now Player's hand is ";
+  print_string [] "The Player's hand is ";
   (player_ba st).hand |> Deck.string_of_deck |> print_endline; 
-  print_string [] "Now Banker's hand is ";
+  print_string [] "The Banker's hand is ";
   (banker_ba st).hand |> Deck.string_of_deck |> print_endline;
   let b_score = ba_score (banker_ba st).hand in
   let p_score = ba_score (player_ba st).hand in 
@@ -605,7 +580,7 @@ let ba_showdown outcome st =
   for i = 0 to st.player_num - 1 do 
     let player = List.nth players i in 
     let win = List.nth (List.map (fun x -> x.bet_on = outcome) players) i in 
-    pay_player st.currency win "won" "lose" player.name player;
+    pay_player st.currency win "won" "lost" player.name player;
     update_player_stats player.name
       (string_of_int player.money ^ " " ^ st.currency) st.name win
   done; reset_bets st; st
@@ -624,9 +599,9 @@ let ba_turn s =
   ignore (read_line());
   let outcome = ba_result s in begin
     match outcome with 
-    | Player -> print_endline "player win"
-    | Banker -> print_endline "banker win"
-    | Tie -> print_endline "there is a tie"
+    | Player -> print_endline "Player won"
+    | Banker -> print_endline "Banker won"
+    | Tie -> print_endline "It's a tie"
   end;
   ba_showdown outcome s
 
