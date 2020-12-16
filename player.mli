@@ -28,3 +28,6 @@ val create_players : int -> t list
 
 (** [print_score curr p] prints the score of player [p] in unit [curr] *)
 val print_score : string -> t -> unit
+
+(** [ends_x x s] is [true] iff [s] contains [x] as a suffix. *)
+val ends_x : string -> string -> bool
