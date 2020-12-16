@@ -51,6 +51,35 @@ let rules = [
   ("baccarat", baccarat_rules)
 ]
 
+(** [add_new_player_stats_h lst name] is [lst] with
+    a new player with name [name] added. If there already exists a player
+    with name [name], it is [lst]. *)
+let add_new_player_stats_h lst name =
+  let match_name name p =
+    match p with
+    | `Assoc ["Name", `String n; m; g1; g2; g3] ->
+      if n = name then true else false
+    | _ -> failwith "wrong json format" in
+  if List.exists (match_name name) lst then lst else
+    `Assoc ["Name", `String name; "Money", `String "";
+            "Blackjack", `Assoc ["Plays", `Int 0; "Wins", `Int 0];
+            "Poker", `Assoc ["Plays", `Int 0; "Wins", `Int 0];
+            "Baccarat", `Assoc ["Plays", `Int 0; "Wins", `Int 0]] :: lst
+
+(** [add_new_player_stats name] adds a new player with name [name] with
+    no money data, plays, and wins to statistics if a player does not already
+    exist in stats with that name. If player already exists, does nothing. *)
+let add_new_player_stats name =
+  let j = Yojson.Basic.from_file "stats.json" in
+  let assoc = j |> member "Players" in
+  let total = j |> member "Total games played" in
+  match assoc with
+  | `List lst ->
+    let new_players = add_new_player_stats_h lst name in
+    `Assoc ["Players", `List new_players; "Total games played", total]
+    |> Yojson.Basic.to_file "stats.json"
+  | _ -> failwith "wrong json format"
+
 (** [str_of_game_player game p] represents the play data for the game with
     name [game] and for [p] *)
 let str_of_game_player game p =
@@ -90,8 +119,9 @@ let str_of_total_stats j =
   "\n  Poker: " ^ poker_plays ^
   "\n  Baccarat: " ^ bct_plays
 
-(** [update_game win g] updates the number of wins and plays for game [g].
-    The number of wins is incremented iff [win] is true. *)
+(** [update_game win g] updates the number of wins and plays for game [g]
+    of a given player. The number of wins is incremented iff [win] is true
+    for the player. *)
 let update_game win g =
   match g with
   | `Assoc ["Plays", `Int plays; "Wins", `Int wins] ->
@@ -123,6 +153,7 @@ let update_if_match name money game win player =
   | _ -> failwith "not a player"
 
 let update_player_stats name money game win =
+  add_new_player_stats name;
   let j = Yojson.Basic.from_file "stats.json" in
   let assoc = j |> member "Players" in
   let total = j |> member "Total games played" in
@@ -201,29 +232,46 @@ and view_rules game player return =
   print_endline "";
   if return then show_menu game player else ()
 
-
-
-(** [view_my_stats j game player] displays the statistics for [player] in [j]
+(** [view_my_stats game player] displays the statistics for [player] in [j]
         during the game with name [game] *)
-and view_my_stats j game player =
+and view_my_stats game player =
+  let j = Yojson.Basic.from_file "stats.json" in
   let players = j |> member "Players" |> to_list in
-  let me = players |> List.find
-             (fun p -> p |> member "Name" |> to_string = player.name) in
-  print_stats_player me player;
-  view_stats game player
+  match players |> List.find_opt
+          (fun p -> p |> member "Name" |> to_string = player.name) with
+  | None -> "No past games found for " ^ player.name ^ ".\n"
+            |> print_string player.style;
+  | Some me -> print_stats_player me player;
+    view_stats game player
 
-
-(** [view_all_stats j game player] displays the statistics in [j] for all
-    players in the game with name [game] during [player]'s turn *)
-and view_all_stats j game player =
+(** [view_all_stats game player] displays the statistics for all
+    players ever since last reset during the game with name [game] during
+    [player]'s turn *)
+and view_all_stats game player =
+  let j = Yojson.Basic.from_file "stats.json" in
   let players = j |> member "Players" |> to_list in
   List.iter (fun p -> print_stats_player p player) players;
   (str_of_total_stats j) ^ "\n" |>  print_string player.style;
   view_stats game player
 
-(** [reset_stats game player] resets the statistics in the game with
-    name [name] during [player]'s turn *)
-and reset_stats game player =
+(** [reset_my_stats game player] resets the statistics for [player]
+    during the game with name [game]. *)
+and reset_my_stats game player =
+  let j = Yojson.Basic.from_file "stats.json" in
+  let assoc = j |> member "Players" in
+  let total = j |> member "Total games played" in
+  match assoc with
+  | `List lst ->
+    let updated = List.filter
+        (fun p -> member "Name" p |> to_string <> player.name) lst in
+    `Assoc ["Players", `List updated; "Total games played", total]
+    |> Yojson.Basic.to_file "stats.json"; view_all_stats game player
+  | _ -> failwith "wrong json format"
+
+(** [reset_all_stats game player] resets all statistics
+    in the game with name [game] during [player]'s turn. Data for all players
+    ever and total game plays are erased. *)
+and reset_all_stats game player =
   let default = {|{
   "Players": [],
   "Total games played": {
@@ -235,31 +283,35 @@ and reset_stats game player =
   let () =
     let file = "stats.json" in
     let oc = open_out file in
-    Printf.fprintf oc "%s" default; close_out oc; () in
+    Printf.fprintf oc "%s" default; close_out oc;
+    view_all_stats game player; () in
   view_stats game player
 
 (** [use_stats player] allows [player] to view all data
     and reset statistics, eventually able to return to the game with name
     [game]. *)
 and view_stats game player =
-  let j = Yojson.Basic.from_file "stats.json" in
   print_string player.style "Select: view my stats, view all stats, \
-                             reset stats for all players, return to tools\n> ";
+                             reset my stats, reset stats for all players, \
+                             return to tools\n> ";
   let str = read_line () |> String.trim |> String.lowercase_ascii in
   match str with
   | "my stats"
-  | "view my stats" -> view_my_stats j game player
+  | "view my"
+  | "view my stats" -> view_my_stats game player
   | "view all"
   | "all stats"
-  | "view all stats" -> view_all_stats j game player
-  | "reset"
-  | "reset stats"
+  | "view all stats" -> view_all_stats game player
+  | "reset me"
+  | "reset my"
+  | "reset my stats" -> reset_my_stats game player
+  | "reset all"
   | "reset stats for all"
-  | "reset stats for all players" -> reset_stats game player
+  | "reset stats for all players" -> reset_all_stats game player
   | "return"
   | "tools"
   | "return to tools" -> show_menu game player
-  | _ -> print_string player.style "Not a valid command. Try again.";
+  | _ -> print_string player.style "Not a valid command. Try again.\n";
     view_stats game player
 
 and show_menu game player =

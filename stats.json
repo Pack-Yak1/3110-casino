@@ -1,1 +1,169 @@
-{"Players":[{"Name":"p2","Money":"120 USD","Blackjack":{"Plays":5,"Wins":2},"Poker":{"Plays":1,"Wins":1},"Baccarat":{"Plays":1,"Wins":1}},{"Name":"p1","Money":"100 USD","Blackjack":{"Plays":5,"Wins":2},"Poker":{"Plays":1,"Wins":0},"Baccarat":{"Plays":1,"Wins":0}},{"Name":"c","Money":"100 $","Blackjack":{"Plays":0,"Wins":0},"Poker":{"Plays":3,"Wins":0},"Baccarat":{"Plays":0,"Wins":0}},{"Name":"b","Money":"0 $","Blackjack":{"Plays":0,"Wins":0},"Poker":{"Plays":5,"Wins":2},"Baccarat":{"Plays":0,"Wins":0}},{"Name":"DEFAULT_Player","Money":"103 $","Blackjack":{"Plays":1,"Wins":1},"Poker":{"Plays":0,"Wins":0},"Baccarat":{"Plays":0,"Wins":0}},{"Name":"a","Money":"200 $","Blackjack":{"Plays":1,"Wins":1},"Poker":{"Plays":6,"Wins":4},"Baccarat":{"Plays":0,"Wins":0}},{"Name":"new2","Money":"93 $","Blackjack":{"Plays":1,"Wins":0},"Poker":{"Plays":0,"Wins":0},"Baccarat":{"Plays":0,"Wins":0}},{"Name":"new1","Money":"107 $","Blackjack":{"Plays":2,"Wins":2},"Poker":{"Plays":0,"Wins":0},"Baccarat":{"Plays":0,"Wins":0}},{"Name":"default_player","Money":"105 $","Blackjack":{"Plays":6,"Wins":5},"Poker":{"Plays":2,"Wins":0},"Baccarat":{"Plays":0,"Wins":0}},{"Name":"default_player2","Money":"110 amt","Blackjack":{"Plays":1,"Wins":0},"Poker":{"Plays":1,"Wins":1},"Baccarat":{"Plays":0,"Wins":0}}],"Total games played":{"Blackjack":39,"Poker":11,"Baccarat":1}}
+{
+  "Players": [
+    {
+      "Name": "p2",
+      "Money": "120 USD",
+      "Blackjack": {
+        "Plays": 5,
+        "Wins": 2
+      },
+      "Poker": {
+        "Plays": 1,
+        "Wins": 1
+      },
+      "Baccarat": {
+        "Plays": 1,
+        "Wins": 1
+      }
+    },
+    {
+      "Name": "p1",
+      "Money": "100 USD",
+      "Blackjack": {
+        "Plays": 5,
+        "Wins": 2
+      },
+      "Poker": {
+        "Plays": 1,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 1,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "c",
+      "Money": "100 $",
+      "Blackjack": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Poker": {
+        "Plays": 3,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "b",
+      "Money": "0 $",
+      "Blackjack": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Poker": {
+        "Plays": 5,
+        "Wins": 2
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "DEFAULT_Player",
+      "Money": "103 $",
+      "Blackjack": {
+        "Plays": 1,
+        "Wins": 1
+      },
+      "Poker": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "a",
+      "Money": "200 $",
+      "Blackjack": {
+        "Plays": 1,
+        "Wins": 1
+      },
+      "Poker": {
+        "Plays": 6,
+        "Wins": 4
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "new2",
+      "Money": "93 $",
+      "Blackjack": {
+        "Plays": 1,
+        "Wins": 0
+      },
+      "Poker": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "new1",
+      "Money": "107 $",
+      "Blackjack": {
+        "Plays": 2,
+        "Wins": 2
+      },
+      "Poker": {
+        "Plays": 0,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "default_player",
+      "Money": "105 $",
+      "Blackjack": {
+        "Plays": 6,
+        "Wins": 5
+      },
+      "Poker": {
+        "Plays": 2,
+        "Wins": 0
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    },
+    {
+      "Name": "default_player2",
+      "Money": "110 amt",
+      "Blackjack": {
+        "Plays": 1,
+        "Wins": 0
+      },
+      "Poker": {
+        "Plays": 1,
+        "Wins": 1
+      },
+      "Baccarat": {
+        "Plays": 0,
+        "Wins": 0
+      }
+    }
+  ],
+  "Total games played": {
+    "Blackjack": 39,
+    "Poker": 11,
+    "Baccarat": 1
+  }
+}

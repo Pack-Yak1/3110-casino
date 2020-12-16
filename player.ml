@@ -50,35 +50,6 @@ let input_prompt = "> "
 let enter_name n = 
   Printf.sprintf "Please enter Player %d's name.\n" (n + 1)
 
-(** [add_new_player_stats_h lst name] is [lst] with
-    a new player with name [name] added. If there already exists a player
-    with name [name], it is [lst]. *)
-let add_new_player_stats_h lst name =
-  let match_name name p =
-    match p with
-    | `Assoc ["Name", `String n; m; g1; g2; g3] ->
-      if n = name then true else false
-    | _ -> failwith "wrong json format" in
-  if List.exists (match_name name) lst then lst else
-    `Assoc ["Name", `String name; "Money", `String "";
-            "Blackjack", `Assoc ["Plays", `Int 0; "Wins", `Int 0];
-            "Poker", `Assoc ["Plays", `Int 0; "Wins", `Int 0];
-            "Baccarat", `Assoc ["Plays", `Int 0; "Wins", `Int 0]] :: lst
-
-(** [add_new_player_stats name] adds a new player with name [name] with
-    no money data, plays, and wins to statistics if a player does not already
-    exist in stats with that name. If player already exists, does nothing. *)
-let add_new_player_stats name =
-  let j = Yojson.Basic.from_file "stats.json" in
-  let assoc = j |> member "Players" in
-  let total = j |> member "Total games played" in
-  match assoc with
-  | `List lst ->
-    let new_players = add_new_player_stats_h lst name in
-    `Assoc ["Players", `List new_players; "Total games played", total]
-    |> Yojson.Basic.to_file "stats.json"
-  | _ -> failwith "wrong json format"
-
 let ends_x x s =
   let sub_safe super start len sub =
     try let substring = String.sub super start len in substring = sub with
@@ -100,11 +71,9 @@ let rec player_helper n names =
     print_endline "Cannot use the same name as another player.\n";
     player_helper n names end else
   if ends_x "(copy)" name then begin
-    print_endline {|Cannot use "(copy)" at the end of a name.\n|};
+    print_endline {|Cannot use "(copy)" at the end of a name.|};
     player_helper n names end else
-    begin (add_new_player_stats name);
-      { default_player with name = name }, (name :: names)
-    end
+    { default_player with name = name }, (name :: names)
 
 let rec create_players_helper n acc index names =
   match n with

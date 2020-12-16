@@ -906,12 +906,14 @@ let rec play_round init_bet has_dealer starting_cards turn state =
     (* Deal cards to every player, then the dealer if there is one. *)
     deal_all new_state starting_cards has_dealer;
     (* Update playcount of [state.name] *)
-    Tools.update_total_game_stats state.name;
 
     (* Enter the REPL loop defined by [turn] to play the desired game, then 
         re-add all players (in case of folding). *)
     let final_state = turn new_state |> reenter_all in
     (* Checks if the game shall run another round. *)
+
+    Tools.update_total_game_stats state.name;
+
     let replay_wanted = repeat_game_msg state.name |> Input.yes_or_no in
     if replay_wanted then begin
 
