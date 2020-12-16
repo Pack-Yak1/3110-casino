@@ -170,7 +170,7 @@ let flush deck =
     else if cmp_suit c3 c7 = 0 
     then rev_sort [c3; c4; c5; c6; c7]
     else []
-  | _ -> [] 
+  | _ -> failwith "Precondition violation" [@coverage off]
 
 let rec check_straight = function
   | [] | [_] -> true 

@@ -257,6 +257,8 @@ let d14 = make_deck [p41; p42]
 let d15 = make_deck [p23; p30]
 let d16 = make_deck [p5; p8; p9]
 let d17 = make_deck [p26; p42; p1]
+let d18 = make_deck [c7; p48]
+let d19 = make_deck [p10; p11; p12; p13]
 
 (* S3, CJ, SQ, D3, S2, S10, D2 *)
 let l1 = make_deck [p3; p37; p12; p42; p2; p10; p41]
@@ -308,6 +310,12 @@ let l24 = make_deck [c8; c8; c8; c8; c8; c8; c8; c8; c8; c8; c8; c8]
 let l25 = make_deck [p1; p10; p12; p33; p48; p13; p11]
 let l26 = make_deck [p14; p18; p22; p23; p26; p27; p2]
 let l27 = make_deck [p2; p3; p4; p5; p45; p41; p22]
+let l28 = make_deck [p2; p8; p9; p10; p11; p12; p1; p40]
+let l28' = make_deck [p12; p11; p10; p9; p8]
+let l29 = make_deck [p41; p42; p45; p46; p48; p49; p27]
+let l29' = make_deck [p49; p48; p46; p45; p42; p41]
+let l30 = make_deck [p41; p42; p45; p46; p48; p1; p27]
+let l30' = make_deck [p48; p46; p45; p42; p41]
 
 let deck_tests = "Deck test suite" >::: [
     test_cmp_suit "spades > hearts" c1 c2 Greater;
@@ -397,6 +405,7 @@ let deck_tests = "Deck test suite" >::: [
     test_rank_of_pair "only one pair" (rev_sort l4) (Some 10);
     test_rank_of_pair "two pairs" (rev_sort l5) (Some 10);
     test_rank_of_pair "Four of a Kind" (rev_sort l14) (Some 9);
+    test_rank_of_pair "empty deck" d5 None;
 
     test_rank_filter "empty deck" 0 d5 d5;
     test_rank_filter "nonexistent rank" 14 l1 l1;
@@ -407,9 +416,12 @@ let deck_tests = "Deck test suite" >::: [
     test_flush "5 cards flush" l9 l9';
     test_flush "6 cards flush" l18 l18';
     test_flush "7 cards flush" l19 (rev_sort l19);
+    test_flush "6 cards flush" l29 l29';
+    test_flush "5 cards flush" l30 l30';
 
     test_straight "no straight" l1 d5;
     test_straight "straight" l13 l13';
+    test_straight "straight" l28 l28';
 
     test_straight_flush "no straight or flush" l1 d5;
     test_straight_flush "straight only" l13 d5;
@@ -426,6 +438,8 @@ let deck_tests = "Deck test suite" >::: [
     test_ba_score "5 and 8 and 9 = 2" d16 2;
     test_ba_score "Q and 3 and Ace = 4" d17 4;
     test_ba_score "empty deck" d5 0;
+    test_ba_score "K and 9 = 9" d18 9;
+    test_ba_score "10, J, Q, K = 0" d19 0;
   ]
 
 (** [bj_win_check_test name outcome player_score exp] constructs an OUnit
