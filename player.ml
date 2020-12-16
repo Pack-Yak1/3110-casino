@@ -79,7 +79,6 @@ let add_new_player_stats name =
     |> Yojson.Basic.to_file "stats.json"
   | _ -> failwith "wrong json format"
 
-(** [ends_x x s] is [true] iff [s] contains [x] as a suffix. *)
 let ends_x x s =
   let sub_safe super start len sub =
     try let substring = String.sub super start len in substring = sub with

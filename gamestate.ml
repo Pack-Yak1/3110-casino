@@ -224,6 +224,31 @@ let rec choose_bet () =
   | "tie" -> Tie
   | _ -> print_endline invalid_bet_on_msg; choose_bet ()
 
+(** [bj_payout state win_msg loss_msg player_outcomes] pays out each player in
+    [state] who wins with [win_msg] and charges each player who loses with
+    [loss_msg], whose victory or lack thereof is given by
+    the respective element of [player_outcomes]. It also prints the money for
+    each player and updates statistics. *)
+let bj_payout state win_msg loss_msg player_outcomes =
+  let players = state.players in
+  for i = 0 to state.player_num - 1 do
+    let player = List.nth players i in
+    let win = List.nth player_outcomes i in
+    pay_player state.currency win win_msg loss_msg player.name player;
+    update_player_stats player.name
+      (string_of_int player.money ^ " " ^ state.currency) state.name win
+  done; reset_bets state; state
+
+(** Plays the dealer's turn, draws until deck score exceeds 17 *)
+let bj_dealer_turn state = 
+  while bj_score dealer.hand < 17 do
+    deal dealer state;
+  done;
+  print_string [] "\nDealer's hand is ";
+  dealer.hand |> Deck.string_of_deck |> print_endline;
+  bj_showdown state |> bj_payout state
+    "won against the dealer" "lost against the dealer"
+
 (** [bet_helper player] is [player] with prompted bet amount assigned. *)
 let bet_helper (player : player) st = 
   let msg = bet_msg player.name in

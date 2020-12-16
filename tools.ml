@@ -35,12 +35,15 @@ let poker_rules = "Rules\nCheck: Decline to bet. You keep your hand but do \
                    Raise: Bet more than the previous bet. Enter the amount \
                    by which you want to increase your total bet, across all \
                    rounds.\n\
-                   Fold: Abandon your bet and your cards, leaving the round.\n\
+                   Fold: Abandon your bet and your cards, leaving the \
+                   round.\n\
                    Quit the game.\nTools: View or edit settings and \
                    rules."
-let baccarat_rules = "Rules\n There are two hands at the deck, Banker and Player.\
-                      You can bet on Banker, Player, or Tie before drawing cards.\
-                      Whoever closer to 9 wins."
+let baccarat_rules = "Rules\nThere are two hands at the deck, Banker and \
+                      Player. You can bet on Banker, Player, or Tie before \
+                      drawing cards. Whichever of Banker or Player is closer \
+                      to 9 wins."
+
 
 let rules = [
   ("blackjack", blackjack_rules);
