@@ -225,6 +225,7 @@ let p2  = make_card S 2
 let p3  = make_card S 3
 let p4  = make_card S 4
 let p5  = make_card S 5
+let p6  = make_card S 6
 let p8  = make_card S 8
 let p9  = make_card S 9
 let p10 = make_card S 10
@@ -232,6 +233,7 @@ let p11 = make_card S 11
 let p12 = make_card S 12
 let p13 = make_card S 13
 let p14 = make_card H 14
+let p17 = make_card H 4
 let p18 = make_card H 5
 let p22 = make_card H 9
 let p23 = make_card H 10
@@ -316,6 +318,22 @@ let l29 = make_deck [p41; p42; p45; p46; p48; p49; p27]
 let l29' = make_deck [p49; p48; p46; p45; p42; p41]
 let l30 = make_deck [p41; p42; p45; p46; p48; p1; p27]
 let l30' = make_deck [p48; p46; p45; p42; p41]
+let l31 = make_deck [p14; p40; p48; p35; p9; p22; p23] 
+let l31' = make_deck [p40]
+let l32 = make_deck [p14; p40; p48; p35; p9; p18; p33]
+let l33 = make_deck [p14; p40; p10; p23; p4; p30; p17]
+let l34 = make_deck [p14; p40; p27; p48; p35; p9; p22]
+let l35 = make_deck [p14; p40; p27; p35; p9; p22; p33]
+let l36 = make_deck [p2; p3; p6; p11; p12; p17; p18]
+let l36' = make_deck [p12; p11; p6; p3; p2]
+let l37 = make_deck [p30; p9; p23; p11; p49; p4; p2]
+let l37' = make_deck [p11]
+let l38 = make_deck [p14; p40; p27; p4; p30; p22; p33]
+let l39 = make_deck [p14; p40; p27; p4; p2; p22; p33]
+let l40 = make_deck [p3; p10; p12; p9; p42; p8; p11]
+let l41 = make_deck [p30; p2; p46; p23; p11; p49; p45]
+let l42 = make_deck [p30; p9; p23; p12; p49; p4; p2]
+let l43 = make_deck [p3; p10; p49; p30; p12; p23; p37]
 
 let deck_tests = "Deck test suite" >::: [
     test_cmp_suit "spades > hearts" c1 c2 Greater;
@@ -486,6 +504,13 @@ let poker_tests = "Poker test suite" >::: [
     test_hand_value "Straight Flush" l12 (StraightFlush l12');
     test_hand_value "Straight" l13 (Straight l13');
     test_hand_value "Four of a Kind" l14 (FourOfAKind (9, l14'));
+    test_hand_value "One pair, and Four of a Kind" l31 (FourOfAKind (9, l31'));
+    test_hand_value "One pair > three of kinds" l32 (FullHouse (9, 14));
+    test_hand_value "Two pair, three of kinds" l33 (FullHouse (4, 14));
+    test_hand_value "three of kinds > Four of kinds" l34 (FourOfAKind (9, l14'));
+    test_hand_value "2 three of kinds" l35 (FullHouse (14, 9));
+    test_hand_value "straight, flush, not striahgt flush" l36 (Flush l36');
+    test_hand_value "2 pair (10, 4)" l37 (TwoPairs (10, 4, l37'));
 
     test_cmp_hand "Straight > Two pairs" l13 l1 Greater;
     test_cmp_hand "Flush < Royal Flush" l9 l11 Lesser;
@@ -498,6 +523,13 @@ let poker_tests = "Poker test suite" >::: [
     test_cmp_hand "two royal flush" l11 l25 Equal;
     test_cmp_hand "two different flush" l9 l26 Lesser;
     test_cmp_hand "two different straight" l13 l27 Greater;
+    test_cmp_hand "2 two pairs, second pair is different" l5 l37 Greater;
+    test_cmp_hand "2 Full house, pair is different" l35 l38 Greater;
+    test_cmp_hand "2 three of a kinds" l10 l39 Lesser;
+    test_cmp_hand "two different straightflush" l12 l40 Greater;
+    test_cmp_hand "two same pair" l4 l41 Greater;
+    test_cmp_hand "two pairs with same two same rank" l37 l42 Lesser;
+    test_cmp_hand "2 three of a kinds with different high cards" l10 l43 Lesser;
   ]
 
 let suite =

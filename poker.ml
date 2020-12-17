@@ -31,7 +31,8 @@ let hand_score = function
   | RoyalFlush -> 10
 
 let rec is_pair deck = match length deck with
-  | 0 | 1 -> HighCard deck
+  | 0 -> failwith "Impossible" [@coverage off]
+  | 1 -> HighCard deck
   | _ -> let r = rank_of_pair deck in 
     match r with
     | None -> is_pair (remainder deck)
