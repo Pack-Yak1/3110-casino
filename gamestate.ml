@@ -86,6 +86,13 @@ let no_players_left_msg = "There are no players left in the game."
 let elimination_msg name = 
   name ^ " is bankrupt and has been eliminated.\n"
 let goodbye_msg = "Goodbye!"
+let poker_round_msgs = [
+  "\nPre-flop round\n";
+  "\nFlop round\n";
+  "\nTurn round\n";
+  "\nRiver round\n";
+]
+let card_numbers = [0; 3; 1; 1]
 
 (************* End prompts & messages *************)
 
@@ -396,7 +403,7 @@ let rec bj_turn s =
   else
     let active_player = List.nth s.players active_player_index in
     start_turn s active_player_index;
-    try match read_line() |> parse_bj with
+    try match read_line() |> begin print_endline ""; parse_bj end with
       | Hit -> bj_hit_protocol active_player s 
       | Stand -> bj_stand_protocol active_player s 
       | Double -> bj_double_protocol active_player s
@@ -415,6 +422,7 @@ and check_illegal_split player state =
   (* Checks that player has exactly 2 cards *)
   else if Deck.length player.hand <> 2 
   then begin print_endline non_2_card_split_msg; true end 
+  (* Checks player has enough money *)
   else if player.bet > player.money / 2 then begin
     print_endline not_enough_to_split_msg;
     true
@@ -447,7 +455,6 @@ and bj_split_protocol player state =
     (* Adds the dummy player to turn order and increments player_num *)
     insert_clone player state copy
   end
-
 
 (** [insert_clone player state copy] is [bj_turn] called on [state], with 
     [state.player_num] incremented by one, and [copy] inserted to 
@@ -640,7 +647,7 @@ and take_poker_command state =
       take_poker_command {state with turn = state.turn + 1}
     else begin 
       start_turn state player_index;
-      try match read_line() |> parse_p with
+      try match read_line() |> begin print_endline ""; parse_p end with
         | Check -> p_check_protocol p state
         | Raise -> p_raise_protocol p state
         | Call -> p_call_protocol p state
@@ -780,40 +787,23 @@ let p_showdown s =
 let reenter_all s =
   List.iter (fun p -> p.in_game <- true) s.players; s
 
-(** [poker_turn s] calls for betting rounds and reveals flop cards according to
-    the rules of Texas Hold'em.  *)
-let poker_turn s =
-  let p_game s =
-    (* 1st betting round *)
-    print_endline "\nPre-flop round\n";
-    let pre_flop_state = take_poker_command s in
-    (* Check at least 2 players remaining *)
-    if remaining_players_n pre_flop_state < 2 then pre_flop_state
-    else begin 
-      deal_n 3 pre_flop_state pre_flop_state.flop;
-      (* 2nd betting round, reset turn to 0 first *)
-      let reset_state = {pre_flop_state with turn = 0} in
-      print_endline "\nFlop round\n";
-      let flop_state = take_poker_command reset_state in
-      (* Check at least 2 players remaining *)
-      if remaining_players_n flop_state < 2 then flop_state
-      else begin
-        deal_n 1 flop_state flop_state.flop;
-        (* 3rd betting round, reset turn to 0 first *)
-        let reset_state = {flop_state with turn = 0} in
-        print_endline "\nTurn round\n";
-        let turn_state = take_poker_command reset_state in
-        (* Check at least 2 players remaining *)
-        if remaining_players_n turn_state < 2 then turn_state
-        else begin
-          deal_n 1 turn_state turn_state.flop;
-          (* 4th and final betting round, reset turn to 0 first *)
-          print_endline "\nRiver round\n";
-          let reset_state = {turn_state with turn = 0} in
-          take_poker_command reset_state
-        end
-      end
+let p_bet_round s msgs cards = 
+  let helper s msg n = 
+    if remaining_players_n s < 2 then s
+    else begin
+      deal_n n s s.flop;
+      let reset_state = {s with turn = 0} in
+      print_endline msg;
+      take_poker_command reset_state
     end in
+  List.fold_left2 helper s msgs cards
+
+let p_game s =
+  p_bet_round s poker_round_msgs card_numbers
+
+(** [poker_game s] initiates the betting rounds of poker, then passes results
+    to the showdown *)
+let poker_turn s =
   p_game s |> p_showdown
 
 (************* End poker engine (REPL) & helpers *************)
