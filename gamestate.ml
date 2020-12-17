@@ -544,12 +544,15 @@ let third st =
   | _ ->  failwith "Wrong number of cards"
 
 let ba_helper st = 
-  print_string [] "The Player's hand is ";
+  print_string [] "Now the Player's hand is ";
   (player_ba st).hand |> Deck.string_of_deck |> print_endline; 
-  print_string [] "The Banker's hand is ";
+  print_string [] "Now the Banker's hand is ";
   (banker_ba st).hand |> Deck.string_of_deck |> print_endline;
+  print_newline();
   let b_score = ba_score (banker_ba st).hand in
   let p_score = ba_score (player_ba st).hand in 
+  print_endline ("Player has score of " ^ string_of_int p_score);
+  print_endline ("Banker has score of " ^ string_of_int b_score);
   if b_score > p_score then Banker
   else if  b_score < p_score then Player 
   else Tie
@@ -598,6 +601,7 @@ let ba_showdown outcome st =
   for i = 0 to st.player_num - 1 do 
     let player = List.nth players i in 
     let win = List.nth (List.map (fun x -> x.bet_on = outcome) players) i in 
+    print_newline();
     pay_player st.currency win "won" "lost" player.name player;
     update_player_stats player.name
       (string_of_int player.money ^ " " ^ st.currency) st.name win
@@ -617,11 +621,12 @@ let ba_turn s =
   banker.hand |> Deck.string_of_deck |> print_endline; 
   print_endline "Press anything to continue.\n"; 
   ignore (read_line());
-  let outcome = ba_result s in begin
+  let outcome = ba_result s in 
+  begin
     match outcome with 
-    | Player -> print_endline "Player won"
-    | Banker -> print_endline "Banker won"
-    | Tie -> print_endline "It's a tie"
+    | Player -> print_endline "\nPlayer won.\n"
+    | Banker -> print_endline "\nBanker won.\n"
+    | Tie -> print_endline "\nIt's a tie.\n"
   end;
   ba_showdown outcome s
 
