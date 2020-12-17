@@ -170,13 +170,15 @@ let flush deck =
     else if cmp_suit c3 c7 = 0 
     then rev_sort [c3; c4; c5; c6; c7]
     else []
-  | _ -> [] 
+  | _ -> failwith "Precondition violation" [@coverage off]
 
 let rec check_straight = function
   | [] | [_] -> true 
   | h1 :: h2 :: t -> if rank h1 - rank h2 = 1 
     then check_straight (h2 :: t) else false
 
+(** [remove_dup_rank cards] is [cards] with each rank exists only once. If cards 
+    with same rank appears, then the first card is kept. *)
 let remove_dup_rank cards : t = 
   let rec helper = function
     | [] -> []
@@ -232,9 +234,10 @@ let n_std_decks (n : int) : t =
 
 let shuffle (cards : t) : t = 
   Random.self_init ();
-  let random = List.map (fun n -> (Random.bits(), n)) cards in 
-  let sorted = List.sort compare random in 
-  List.map (fun (a, b) -> b) sorted
+  cards 
+  |> List.map (fun n -> (Random.bits(), n)) 
+  |> List.sort compare
+  |> List.map snd
 
 let split deck = 
   match deck with

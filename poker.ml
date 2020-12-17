@@ -31,7 +31,8 @@ let hand_score = function
   | RoyalFlush -> 10
 
 let rec is_pair deck = match length deck with
-  | 0 | 1 -> HighCard deck
+  | 0 -> failwith "Impossible" [@coverage off]
+  | 1 -> HighCard deck
   | _ -> let r = rank_of_pair deck in 
     match r with
     | None -> is_pair (remainder deck)
@@ -69,7 +70,7 @@ let is_full_house deck =
 
 let first deck = 
   match pick deck 0 with 
-  | None -> failwith "impossible"
+  | None -> failwith "impossible" [@coverage off]
   | Some c -> c 
 
 let sf_helper fl st_fl = function
@@ -139,7 +140,11 @@ let cmp_hand c1 c2 =
   let t1 = hand_value c1 in 
   let t2 = hand_value c2 in 
   let c = cmp_helper cmp_type cmp_rank t1 t2 in   
-  if c = 0 then 
-    cmp_high_cards (get_cards t1) (get_cards t2) 
+  if c = 0 then begin
+    let c' = cmp_sec_rank t1 t2 in 
+    if c' = 0 then 
+      cmp_high_cards (get_cards t1) (get_cards t2)
+    else c'
+  end
   else c 
 

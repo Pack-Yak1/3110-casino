@@ -1,3 +1,44 @@
+(*
+Tools:
+We could not unit test the Tools modules because the exposed functions
+involve printing, modifying files, and changing player settings. As a result,
+we playtested each function throughout different points of gameplay and in
+different gameplay scenarios.
+
+Main, Gamestate:
+We could not unit test these modules because their exposed functions
+are mainly game engines. Thus, we playtested each game.
+Blackjack game: We playtested to see if each blackjack command is perform 
+correctly. We check to see if hit gives a new card to player, double did double
+bet player placed, and split creates two separate hand and calculate the result 
+for each hand.
+Poker game: Similar with Blackjack, we playtested to see each Poker command is 
+performed appropriately. We also check if blinds is working. 
+Baccarat game: We playtested to see if it follows the right Baccarat rule, 
+returns the correct winning hand and individual winning status of each player at 
+the end of each round. 
+For general, we playtest to see if the engine prompted to ask player
+to reenter information if input is invalid, cards are in random order for each 
+game, switching between games at the end of play.
+
+Player:
+Playtested with Main, Gamestate.
+
+Command, Input:
+Similarly, we could not unit test these modules because they take and parse
+user input. We playtested by testing many inputs, using a glass-box
+approach to reach every possible branch.
+
+Deck, Blackjack, Poker:
+We used OUnit to test these modules. We develop test cases for each funtion in 
+these three modules using glass-box testing. In addition, bisect is used to make
+sure the coverage.  
+
+Baccarat:
+Playtested with Main, Gamestate.
+*)
+
+
 open OUnit2
 open Deck
 open Blackjack
@@ -184,6 +225,7 @@ let p2  = make_card S 2
 let p3  = make_card S 3
 let p4  = make_card S 4
 let p5  = make_card S 5
+let p6  = make_card S 6
 let p8  = make_card S 8
 let p9  = make_card S 9
 let p10 = make_card S 10
@@ -191,6 +233,7 @@ let p11 = make_card S 11
 let p12 = make_card S 12
 let p13 = make_card S 13
 let p14 = make_card H 14
+let p17 = make_card H 4
 let p18 = make_card H 5
 let p22 = make_card H 9
 let p23 = make_card H 10
@@ -216,6 +259,8 @@ let d14 = make_deck [p41; p42]
 let d15 = make_deck [p23; p30]
 let d16 = make_deck [p5; p8; p9]
 let d17 = make_deck [p26; p42; p1]
+let d18 = make_deck [c7; p48]
+let d19 = make_deck [p10; p11; p12; p13]
 
 (* S3, CJ, SQ, D3, S2, S10, D2 *)
 let l1 = make_deck [p3; p37; p12; p42; p2; p10; p41]
@@ -267,6 +312,28 @@ let l24 = make_deck [c8; c8; c8; c8; c8; c8; c8; c8; c8; c8; c8; c8]
 let l25 = make_deck [p1; p10; p12; p33; p48; p13; p11]
 let l26 = make_deck [p14; p18; p22; p23; p26; p27; p2]
 let l27 = make_deck [p2; p3; p4; p5; p45; p41; p22]
+let l28 = make_deck [p2; p8; p9; p10; p11; p12; p1; p40]
+let l28' = make_deck [p12; p11; p10; p9; p8]
+let l29 = make_deck [p41; p42; p45; p46; p48; p49; p27]
+let l29' = make_deck [p49; p48; p46; p45; p42; p41]
+let l30 = make_deck [p41; p42; p45; p46; p48; p1; p27]
+let l30' = make_deck [p48; p46; p45; p42; p41]
+let l31 = make_deck [p14; p40; p48; p35; p9; p22; p23] 
+let l31' = make_deck [p40]
+let l32 = make_deck [p14; p40; p48; p35; p9; p18; p33]
+let l33 = make_deck [p14; p40; p10; p23; p4; p30; p17]
+let l34 = make_deck [p14; p40; p27; p48; p35; p9; p22]
+let l35 = make_deck [p14; p40; p27; p35; p9; p22; p33]
+let l36 = make_deck [p2; p3; p6; p11; p12; p17; p18]
+let l36' = make_deck [p12; p11; p6; p3; p2]
+let l37 = make_deck [p30; p9; p23; p11; p49; p4; p2]
+let l37' = make_deck [p11]
+let l38 = make_deck [p14; p40; p27; p4; p30; p22; p33]
+let l39 = make_deck [p14; p40; p27; p4; p2; p22; p33]
+let l40 = make_deck [p3; p10; p12; p9; p42; p8; p11]
+let l41 = make_deck [p30; p2; p46; p23; p11; p49; p45]
+let l42 = make_deck [p30; p9; p23; p12; p49; p4; p2]
+let l43 = make_deck [p3; p10; p49; p30; p12; p23; p37]
 
 let deck_tests = "Deck test suite" >::: [
     test_cmp_suit "spades > hearts" c1 c2 Greater;
@@ -356,6 +423,7 @@ let deck_tests = "Deck test suite" >::: [
     test_rank_of_pair "only one pair" (rev_sort l4) (Some 10);
     test_rank_of_pair "two pairs" (rev_sort l5) (Some 10);
     test_rank_of_pair "Four of a Kind" (rev_sort l14) (Some 9);
+    test_rank_of_pair "empty deck" d5 None;
 
     test_rank_filter "empty deck" 0 d5 d5;
     test_rank_filter "nonexistent rank" 14 l1 l1;
@@ -366,9 +434,12 @@ let deck_tests = "Deck test suite" >::: [
     test_flush "5 cards flush" l9 l9';
     test_flush "6 cards flush" l18 l18';
     test_flush "7 cards flush" l19 (rev_sort l19);
+    test_flush "6 cards flush" l29 l29';
+    test_flush "5 cards flush" l30 l30';
 
     test_straight "no straight" l1 d5;
     test_straight "straight" l13 l13';
+    test_straight "straight" l28 l28';
 
     test_straight_flush "no straight or flush" l1 d5;
     test_straight_flush "straight only" l13 d5;
@@ -385,6 +456,8 @@ let deck_tests = "Deck test suite" >::: [
     test_ba_score "5 and 8 and 9 = 2" d16 2;
     test_ba_score "Q and 3 and Ace = 4" d17 4;
     test_ba_score "empty deck" d5 0;
+    test_ba_score "K and 9 = 9" d18 9;
+    test_ba_score "10, J, Q, K = 0" d19 0;
   ]
 
 (** [bj_win_check_test name outcome player_score exp] constructs an OUnit
@@ -431,6 +504,13 @@ let poker_tests = "Poker test suite" >::: [
     test_hand_value "Straight Flush" l12 (StraightFlush l12');
     test_hand_value "Straight" l13 (Straight l13');
     test_hand_value "Four of a Kind" l14 (FourOfAKind (9, l14'));
+    test_hand_value "One pair, and Four of a Kind" l31 (FourOfAKind (9, l31'));
+    test_hand_value "One pair > three of kinds" l32 (FullHouse (9, 14));
+    test_hand_value "Two pair, three of kinds" l33 (FullHouse (4, 14));
+    test_hand_value "three of kinds > Four of kinds" l34 (FourOfAKind (9, l14'));
+    test_hand_value "2 three of kinds" l35 (FullHouse (14, 9));
+    test_hand_value "straight, flush, not striahgt flush" l36 (Flush l36');
+    test_hand_value "2 pair (10, 4)" l37 (TwoPairs (10, 4, l37'));
 
     test_cmp_hand "Straight > Two pairs" l13 l1 Greater;
     test_cmp_hand "Flush < Royal Flush" l9 l11 Lesser;
@@ -443,6 +523,13 @@ let poker_tests = "Poker test suite" >::: [
     test_cmp_hand "two royal flush" l11 l25 Equal;
     test_cmp_hand "two different flush" l9 l26 Lesser;
     test_cmp_hand "two different straight" l13 l27 Greater;
+    test_cmp_hand "2 two pairs, second pair is different" l5 l37 Greater;
+    test_cmp_hand "2 Full house, pair is different" l35 l38 Greater;
+    test_cmp_hand "2 three of a kinds" l10 l39 Lesser;
+    test_cmp_hand "two different straightflush" l12 l40 Greater;
+    test_cmp_hand "two same pair" l4 l41 Greater;
+    test_cmp_hand "two pairs with same two same rank" l37 l42 Lesser;
+    test_cmp_hand "2 three of a kinds with different high cards" l10 l43 Lesser;
   ]
 
 let suite =

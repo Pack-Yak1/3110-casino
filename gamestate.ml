@@ -390,7 +390,7 @@ let bj_dealer_turn state =
   while bj_score dealer.hand < 17 do
     deal dealer state;
   done;
-  print_string [] "Dealer's hand is ";
+  print_string [] "\nDealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
   bj_showdown state |> bj_payout state
     "won against the dealer" "lost against the dealer"
