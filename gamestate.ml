@@ -354,7 +354,7 @@ let eliminate_bankrupts state =
 
 (************ Begin shared protocols ************)
 
-(** [quit_protocol] ends the game instantly and prints a goodbye message.
+(** [quit_protocol state] ends the game instantly and prints a goodbye message.
     It is shared by all game modes. *)
 let quit_protocol state = 
   print_endline goodbye_msg;
@@ -365,6 +365,12 @@ let quit_protocol state =
 let invalid_protocol (engine : t -> t) (state : t) : t = 
   print_endline invalid_command_msg;
   engine state 
+
+(** [no_player_protocol state] ends the game and explains that it is due to
+    the lack of remaining players. *)
+let no_player_protocol state = 
+  print_endline no_players_left_msg;
+  quit_protocol state
 
 (************ End shared protocols ************)
 
@@ -427,8 +433,7 @@ and check_illegal_split player state =
     print_endline not_enough_to_split_msg;
     true
   end else begin
-    let hand = player.hand in
-    match pick hand 0, pick hand 1 with
+    match pick player.hand 0, pick player.hand 1 with
     | Some c1, Some c2 -> begin
         let d1, d2 = make_deck [c1], make_deck [c2] in
         if bj_score d1 <> bj_score d2 
@@ -876,53 +881,56 @@ let get_meta state =
 
 (************* Begin game initializer (REPL) functions *************)
 
+
+
 (** [play_round init_bet has_dealer starting_cards state turn] enters a REPL 
     defined by [turn]. Players are prompted to place bets before cards are 
     dealt if [init_bet]. A dealer is assigned to the game if [has_dealer]. The
     number of cards dealt to each player before the game begins is 
     [starting cards]. *)
 let rec play_round init_bet has_dealer starting_cards turn state =
-
   (* Check if there are still any eligible players remaining. *)
-  if state.player_num <= 0 then begin 
-    print_endline no_players_left_msg;
-    quit_protocol state
-  end else
+  if state.player_num <= 0 then no_player_protocol state 
+  else
 
-    (* Resets game turn, all players and community decks, and resets the main
-       deck to its initial size. If the game mode permits betting before
-       cards are dealt, bets are also obtained from StdIn. *)
+    (* Reset gamestate for new game, update playcount stats. *)
     let new_state = refresh_state state init_bet in
-    (* Deal cards to every player, then the dealer if there is one. *)
     deal_all new_state starting_cards has_dealer;
-    (* Update playcount of [state.name] *)
-
-    (* Enter the REPL loop defined by [turn] to play the desired game, then 
-        re-add all players (in case of folding). *)
-    let final_state = turn new_state |> reenter_all in
-    (* Checks if the game shall run another round. *)
-
     Tools.update_total_game_stats state.name;
 
-    let replay_wanted = repeat_game_msg state.name |> Input.yes_or_no in
-    if replay_wanted then begin
+    (* Play the game using [turn], the game engine. *)
+    let final_state = turn new_state |> reenter_all in
 
-      (* Eliminate bankrupt players, begin next round. *)
-      let next_state = eliminate_bankrupts final_state in
-      play_round init_bet has_dealer starting_cards turn next_state
-      (* Checks if a different game is desired instead. *)
+    (* Checks if the game shall run another round. *)
+    replay_protocol starting_cards turn final_state
 
-    end else if Input.yes_or_no change_game_msg then begin
+(** [replay_protocol starting_cards turn final_state] prompts the player if 
+    they wish to play another round of the same game. If they do, then another
+    game is started with [starting_cards] number of cards dealt to each player
+    and [turn] as the game engine, and returns the appropriate gamestate. If 
+    not, the player can choose to play a different supported game with a 
+    different set of metavariables, or quit and display final scores. *)
+and replay_protocol starting_cards turn final_state = 
+  (* Check if player wants to play another of the same game. *)
+  let replay_wanted = repeat_game_msg final_state.name |> Input.yes_or_no in
+  if replay_wanted then begin
 
-      (* Eliminate bankrupt players, prompt for new gamemode. *)
-      let next_state = eliminate_bankrupts final_state in
-      (* Prompts for new gamemode and updates metagame info. *)
-      let init, has_deal, start_cards, engine', state' = get_meta next_state in
-      (* Begins round of new gamemode. *)
-      play_round init has_deal start_cards engine' state'
+    (* Eliminate bankrupt players, begin next round. *)
+    let next_state = eliminate_bankrupts final_state in
+    play_round init_bet has_dealer starting_cards turn next_state
 
-      (* Display final results & exit. *)
-    end else display_final_scores final_state 
+    (* Checks if a different game is desired instead. *)
+  end else if Input.yes_or_no change_game_msg then begin
+
+    (* Eliminate bankrupt players, prompt for new gamemode, update state. *)
+    let next_state = eliminate_bankrupts final_state in
+    let init, has_deal, start_cards, engine', state' = get_meta next_state in
+
+    (* Begins round of new gamemode. *)
+    play_round init has_deal start_cards engine' state'
+
+    (* Display final results & exit. *)
+  end else display_final_scores final_state 
 
 let game_constructor state =
   (* Prompt user for desired gamemode and obtain required meta info. *)
