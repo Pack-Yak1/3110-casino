@@ -148,3 +148,20 @@ let cmp_hand c1 c2 =
   end
   else c 
 
+let string_of_hand = function
+  | HighCard c -> "HighCard with " ^ string_of_deck c
+  | Pair (r, c) -> 
+    "Pair of " ^ string_of_int r ^ " with " ^ string_of_deck c
+  | TwoPairs (r1, r2, c) -> 
+    "Two Pair of " ^ string_of_int r1 ^ " and " ^ string_of_int r2 ^ " with " ^ 
+    string_of_deck c
+  | ThreeOfAKind (r, c) -> "Three of a kind with " ^ string_of_int r ^ 
+                           " and with " ^ string_of_deck c
+  | Straight c-> "Straight with " ^ string_of_deck c
+  | Flush c -> "Flush with " ^ string_of_deck c
+  | FullHouse (r1, r2) -> "Full house with 3 of " ^ string_of_int r1 ^ 
+                          " and 2 of " ^ string_of_int r2
+  | FourOfAKind (r, c) -> 
+    "Four of a kind with " ^ string_of_int r ^ " and with " ^ string_of_deck c
+  | StraightFlush c -> "Straight flush of " ^ string_of_deck c
+  | RoyalFlush -> "Royal flush"
