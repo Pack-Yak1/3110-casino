@@ -92,6 +92,8 @@ let poker_round_msgs = [
   "\nTurn round\n";
   "\nRiver round\n";
 ]
+(** Number of flop cards added before the start of each betting round in Texas
+    Hold'em. *)
 let card_numbers = [0; 3; 1; 1]
 
 (************* End prompts & messages *************)
@@ -125,6 +127,20 @@ let display_final_scores state =
   print_endline final_score_header;
   let lst = state.players in
   List.iter (Player.print_score state.currency) lst
+
+(** Requires: [p] is a clone and there exists exactly one [" "] between the 
+    original player's name and [copy_suffix] in [p.name]. *)
+let print_clone_result name msg win p curr = 
+  let excess_len = (String.length name - String.length copy_suffix) - 1 in
+  let original_name = String.sub name 0 excess_len in
+  let earn_or_loss = if win then "earned" else "lost" in
+  let abs_amt = if p.money < 0 then ~- (p.money) else p.money in
+  name ^ " " ^ msg ^ " and has " ^ earn_or_loss ^ " " ^ original_name ^ " " 
+  ^ string_of_int abs_amt ^ " " ^ curr ^ "." |> print_endline
+
+let print_player_result name msg p curr = 
+  name ^ " " ^ msg ^ " and has " ^ string_of_int p.money
+  ^ " " ^ curr ^ " total." |> print_endline
 
 (************* End display (PRINT) functions *************)
 
@@ -166,6 +182,24 @@ let shared_init s init_bet has_dealer starting_cards =
 (************* End state initializer (EVAL) & helpers *************)
 
 (************* Begin query (EVAL) functions *************)
+
+(** [is_copy] player is true if [player.name] ends with [copy_suffix], else
+    it is false. *)
+let is_copy (player : Player.t) =
+  Player.ends_x copy_suffix player.name
+
+(** [has_copy player state] is true if [state.players] contains a copy of
+    [player].  *)
+let has_copy (player : Player.t) state = 
+  let check = player.name ^ " " ^ copy_suffix in
+  List.filter (fun (p : Player.t) -> p.name = check) state.players
+  |> List.length 
+  |> ( <> ) 0
+
+(** [not_unique player state] is true if [player] has a copy or is itself a 
+    copy. *)
+let not_unique player state = 
+  has_copy player state || is_copy player
 
 (** [remaining_players state] is a list of players still in the game in
     [state] *)
@@ -295,16 +329,18 @@ let bj_showdown state =
 (** [pay_player curr win win_msg loss_msg p] pays [p] with name [name]
     if they win, given by [win], or charges them if they do not win, and prints
     the result of whether they win/lose (with [win_msg] or [loss_msg],
-    respectively) and their remaining money, in [state] *)
+    respectively) and their remaining money, in [state]. If the player is a 
+    clone, prints a slightly different message announcing the effect on their
+    original. *)
 let pay_player curr win win_msg loss_msg name p =
   if win then begin
     p.money <- p.bet + p.money;
-    name ^ " " ^ win_msg ^ " and has " ^ string_of_int p.money
-    ^ " " ^ curr ^ " total." |> print_endline;
+    if is_copy p then print_clone_result name win_msg true p curr else
+      print_player_result name win_msg p curr
   end else begin
     p.money <- p.money - p.bet;
-    name ^ " " ^ loss_msg ^ " and has "  ^ string_of_int p.money
-    ^ " " ^ curr ^ " total."|> print_endline;
+    if is_copy p then print_clone_result name loss_msg false p curr else
+      print_player_result name loss_msg p curr
   end
 
 (** [reset_bets s] is [s] with the bets of all players set to 0. *)
@@ -391,6 +427,29 @@ let bj_payout state win_msg loss_msg player_outcomes =
       (string_of_int player.money ^ " " ^ state.currency) state.name win
   done; reset_bets state; state
 
+(** [recombine_copies state] is state with all copies deleted and their 
+    earnings/losses returned to their originals.
+    Requires: Copies are always exactly after their originals in 
+    [state.players] *)
+let rec recombine_copies state =
+  match state.players with
+  | [] -> state
+  | p :: [] -> state
+  | p1 :: p2 :: t ->
+    if is_copy p2 then begin
+      (* Reduce playercount *)
+      state.player_num <- state.player_num - 1;
+      (* Give original winnings/losses *)
+      let p' = {p1 with money = p1.money + p2.money} in
+      let p_lst' = p' :: (recombine_copies {state with players = t}).players in
+      {state with players = p_lst'}
+    end else begin
+      (* Not a clone, process rest of list *)
+      let p_lst' = 
+        p1 :: (recombine_copies {state with players = p2 :: t}).players in
+      {state with players = p_lst'}
+    end
+
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
 let bj_dealer_turn state = 
   while bj_score dealer.hand < 17 do
@@ -398,8 +457,9 @@ let bj_dealer_turn state =
   done;
   print_string [] "\nDealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
-  bj_showdown state |> bj_payout state
-    "won against the dealer" "lost against the dealer"
+  bj_showdown state 
+  |> bj_payout state "won against the dealer" "lost against the dealer"
+  |> recombine_copies
 
 (** Prompts player to enter a command for their turn in Blackjack. Returns a 
     [game_state] with the results of the blackjack turn applied.*)
@@ -479,24 +539,6 @@ and insert_after p lst copy =
   match lst with
   | [] -> raise Not_found
   | h :: t -> if h = p then h :: copy :: t else h :: insert_after p t copy
-
-(** [is_copy] player is true if [player.name] ends with [copy_suffix], else
-    it is false. *)
-and is_copy (player : Player.t) =
-  Player.ends_x copy_suffix player.name
-
-(** [has_copy player state] is true if [state.players] contains a copy of
-    [player].  *)
-and has_copy (player : Player.t) state = 
-  let check = player.name ^ " " ^ copy_suffix in
-  List.filter (fun (p : Player.t) -> p.name = check) state.players
-  |> List.length 
-  |> ( <> ) 0
-
-(** [not_unique player state] is true if [player] has a copy or is itself a 
-    copy. *)
-and not_unique player state = 
-  has_copy player state || is_copy player
 
 and bj_hit_protocol player state = 
   deal player state;
