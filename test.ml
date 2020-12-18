@@ -35,7 +35,9 @@ these three modules using glass-box testing. In addition, bisect is used to make
 sure the coverage.  
 
 Baccarat:
-Playtested with Main, Gamestate.
+Playtested with Main, Gamestate. Make sure correct drawing rule (banker's rule,
+player's rule) is followed in different score, and correct winner is determined
+at the end of the game.
 *)
 
 
@@ -112,6 +114,10 @@ let test_n_std_decks name n expected_output =
   name >:: (fun _ -> 
       assert_equal expected_output (length (n_std_decks n)) 
         ~printer:string_of_int)
+
+let test_deck_eq name d1 d2 expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (deck_eq d1 d2) ~printer:string_of_bool)
 
 let test_shuffle name lst expected_output  =
   name >:: (fun _ -> 
@@ -384,6 +390,10 @@ let deck_tests = "Deck test suite" >::: [
     test_n_std_decks "one standard deck" 1 52;
     test_n_std_decks "two standard deck" 2 104;
     test_n_std_decks "five standard deck" 5 260;
+
+    test_deck_eq "empty deck = empty deck" d5 d5 true;
+    test_deck_eq "different decks" d5 d3 false;
+    test_deck_eq "shuffled deck are equal" s1 s2 true;
 
     test_shuffle "shuffle standard deck" s1 (of_deck d0);
     test_shuffle "shuffle standard deck2" s2 (of_deck d0);
