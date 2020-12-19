@@ -181,6 +181,21 @@ let print_player_result name msg p curr =
   name ^ " " ^ msg ^ " and has " ^ string_of_int p.money
   ^ " " ^ curr ^ " total." |> print_endline
 
+(** [print_hand_result players] displays the hand type of all players remaining
+    in [players] in a Poker game, including the case in which a player won by
+    everyone else folding. *)
+let print_hand_result st =
+  let players = st.players |> List.filter 
+                  (fun x -> x.money > 0 && x.in_game) in
+  match players with
+  | [] -> failwith "no players"
+  | [h] -> h.name ^ "'s hand is " ^ string_of_deck h.hand |> print_endline
+  | _ ->
+    for i = 0 to List.length players - 1 do 
+      let player = List.nth players i in 
+      let result = st.flop.hand |> Deck.concat player.hand |> hand_value in 
+      print_endline (player.name ^ " has a " ^ string_of_hand result);
+    done
 
 (************* End display (PRINT) functions *************)
 
@@ -250,20 +265,6 @@ let remaining_players state =
     game in state [state]. *)
 let remaining_players_n state =
   remaining_players state |> List.length
-
-(** [print_hand_result players] displays the hand type of all players in 
-    [players] in a Poker game. *)
-let print_hand_result st =
-  let players = remaining_players st in
-  match players with
-  | [] -> failwith "no players"
-  | [h] -> h.name ^ "'s hand is " ^ string_of_deck h.hand |> print_endline
-  | _ ->
-    for i = 0 to List.length players - 1 do 
-      let player = List.nth players i in 
-      let result = st.flop.hand |> Deck.concat player.hand |> hand_value in 
-      print_endline (player.name ^ " has a " ^ string_of_hand result);
-    done
 
 (** [all_maxed_bets state] is [true] if all remaining players have betted all
     their chips and [false] otherwise. If there are no players in [state],
