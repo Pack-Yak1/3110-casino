@@ -73,6 +73,8 @@ let non_2_card_split_msg = "You can only split if you have exactly 2 cards.\n"
 let unequal_split_msg = "You can only split if both your cards have the same \
                          value.\n"
 let not_enough_to_split_msg = "You do not have enough money to split.\n"
+let clear_screen_msg = "Enter anything to end your turn.\n"
+let after_clear_msg = "Enter anything to begin your turn.\n"
 (** [turn_msg n] is a string prompt for the [n-th] user to enter their
     command. *)
 let turn_msg (state : t) n = 
@@ -108,18 +110,19 @@ let print_hand state index =
   player.hand |> string_of_deck |> ( ^ ) prefix |> print_string player.style;
   print_string [] "\n"
 
-(** [start_turn] prints a helpful message containing information about the 
-    player's hand, as well as the flop cards, if it is a game of Texas Hold'em
-    and there are flop cards on the table. *)
-let start_turn state player = 
+(** [start_turn state n] prints a helpful message containing information
+    about the [n]th player's hand in [state], as well as the flop cards, if
+    it is a game of Texas Hold'em and there are flop cards on the table. *)
+let start_turn state n =
+  n |> turn_msg state |> print_endline;
   if length state.flop.hand > 0 then begin
     let flop_msg = 
       "The community cards are: " ^ (state.flop.hand |> string_of_deck) in
     print_endline flop_msg;
   end else ();
-  player |> turn_msg state |> print_endline;
-  print_hand state player;
-  print_string ((List.nth state.players player).style) Input.input_prompt
+  print_hand state n;
+  let player = List.nth state.players n in
+  print_string player.style Input.input_prompt
 
 (** [display_final_scores state] prints the final scores of all players
     in [state]. *)

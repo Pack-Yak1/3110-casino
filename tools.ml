@@ -40,7 +40,8 @@ let poker_rules = "Rules\nCheck: Decline to bet. You keep your hand but do \
                    by which you want to increase your total bet, across all \
                    rounds.\n\
                    Fold: Abandon your bet and your cards, leaving the \
-                   round.\n\
+                   round. If you do not have enough money to call, you must \
+                   fold.\n\
                    Quit the game.\nTools: View or edit settings and \
                    rules."
 let baccarat_rules = "Rules\nThere are two hands at the deck, Banker and \
@@ -274,7 +275,7 @@ and view_my_stats game player =
   match players |> List.find_opt
           (fun p -> p |> member "Name" |> to_string = player.name) with
   | None -> "No past games found for " ^ player.name ^ ".\n"
-            |> print_string player.style;
+            |> print_string player.style; view_stats game player
   | Some me -> print_stats_player me player;
     view_stats game player
 
@@ -314,37 +315,26 @@ and reset_all_stats game player =
     "Baccarat": 0
   }
 }|} in
-  let () =
-    let file = "stats.json" in
-    let oc = open_out file in
-    Printf.fprintf oc "%s" default; close_out oc;
-    view_all_stats game player; () in
-  view_stats game player
+  let file = "stats.json" in
+  let oc = open_out file in
+  Printf.fprintf oc "%s" default; close_out oc;
+  view_all_stats game player
 
 (** [use_stats player] allows [player] to view all data
     and reset statistics, eventually able to return to the game with name
     [game]. *)
 and view_stats game player =
-  print_string player.style "Select: view my stats, view all stats, \
+  print_string player.style "Stats: view my stats, view all stats, \
                              reset my stats, reset stats for all players, \
                              return to tools\n> ";
   let str = read_line () |> String.trim |> String.lowercase_ascii in
   match str with
-  | "my stats"
-  | "view my"
-  | "view my stats" -> view_my_stats game player
-  | "view all"
-  | "all stats"
-  | "view all stats" -> view_all_stats game player
-  | "reset me"
-  | "reset my"
-  | "reset my stats" -> reset_my_stats game player
-  | "reset all"
-  | "reset stats for all"
+  | "my stats" | "view my" | "view my stats" -> view_my_stats game player
+  | "view all" | "all stats" | "view all stats" -> view_all_stats game player
+  | "reset me" | "reset my" | "reset my stats" -> reset_my_stats game player
+  | "reset all" | "reset stats for all"
   | "reset stats for all players" -> reset_all_stats game player
-  | "return"
-  | "tools"
-  | "return to tools" -> show_menu game player
+  | "return" | "tools" | "return to tools" -> show_menu game player
   | _ -> print_string player.style "Not a valid command. Try again.\n";
     view_stats game player
 
