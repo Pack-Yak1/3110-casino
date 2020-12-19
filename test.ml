@@ -35,7 +35,9 @@ approach to reach every possible branch.
 Deck, Blackjack, Poker:
 We used OUnit to test these modules. We developed test cases for each funtion in 
 these three modules using glass-box testing. In addition, we used bisect to
-check for and increase coverage.  
+check for and increase coverage. We turned off bisect for precondition violation,
+and situation that will not happen in real game. Getters are not tested thorugh
+OUnit, but instead playtested. 
 
 Baccarat:
 Playtested with Main, Gamestate. Make sure correct drawing rule (banker's rule,
@@ -172,6 +174,14 @@ let test_ba_score name deck expected_output =
   name >:: (fun _ -> 
       assert_equal expected_output (ba_score deck) ~printer:string_of_int)
 
+let test_split name deck expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (split deck))
+
+let test_suit name card expected_output = 
+  name >:: (fun _ -> 
+      assert_equal expected_output (suit card))
+
 let c1 = make_card S 2
 let c2 = make_card H 3
 let c3 = make_card C 4
@@ -210,6 +220,7 @@ let s1 = shuffle (std_deck())
 let s2 = shuffle (std_deck())
 let s3 = shuffle d4
 let s4 = shuffle d8
+let s5 = make_deck [c5; c5]
 
 let p1  = make_card S 14
 let p2  = make_card S 2
@@ -453,6 +464,15 @@ let deck_tests = "Deck test suite" >::: [
     test_ba_score "empty deck" d5 0;
     test_ba_score "K and 9 = 9" d18 9;
     test_ba_score "10, J, Q, K = 0" d19 0;
+
+    test_split "split [S2,H3]" d1 (make_deck [c1], make_deck [c2]);
+    test_split "split [C4,D5]" d2 (make_deck [c3], make_deck [c4]);
+    test_split "split [S11,S11]" s5 (make_deck [c5], make_deck [c5]);
+
+    test_suit "S2" c1 S;
+    test_suit "H3" c2 H;
+    test_suit "C4" c3 C;
+    test_suit "D5" c4 D;
   ]
 
 (** [bj_win_check_test name outcome player_score exp] constructs an OUnit
