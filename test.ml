@@ -34,16 +34,16 @@ user input. We playtested by testing many inputs, using a glass-box
 approach to reach every possible branch.
 
 Deck, Blackjack, Poker:
-We used OUnit to test these modules. We developed test cases for each funtion in 
-these three modules using glass-box testing. In addition, we used bisect to
-check for and increase coverage. We turned off bisect for precondition violation,
-and situation that will not happen in real game. Getters are not tested thorugh
-OUnit, but instead playtested. 
+We used OUnit to test these modules. We developed test cases for each function
+in these three modules using glass-box testing. In addition, we used bisect to
+check for and increase coverage. We turned off bisect for precondition
+violations and situation that would not happen in a real game. Getters were not
+tested thorugh OUnit, but instead playtested. 
 
 Baccarat:
-Playtested with Main, Gamestate. Make sure correct drawing rule (banker's rule,
-player's rule) is followed in different score, and correct winner is determined
-at the end of the game.
+Playtested with Main, Gamestate to make sure correct drawing rules
+(banker's rule, player's rule) are followed in different score, and correct
+winner is determined at the end of the game.
 *)
 
 

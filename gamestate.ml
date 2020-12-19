@@ -181,15 +181,6 @@ let print_player_result name msg p curr =
   name ^ " " ^ msg ^ " and has " ^ string_of_int p.money
   ^ " " ^ curr ^ " total." |> print_endline
 
-(** [print_hand_result players] displays the hand type of all players in 
-    [players] in a Poker game. *)
-let print_hand_result st =
-  let players = st.players |> List.filter (fun x -> x.in_game) in
-  for i = 0 to List.length players - 1 do 
-    let player = List.nth players i in 
-    let result = st.flop.hand |> Deck.concat player.hand |> hand_value in 
-    print_endline (player.name ^ " has a " ^ string_of_hand result);
-  done
 
 (************* End display (PRINT) functions *************)
 
@@ -253,12 +244,26 @@ let not_unique player state =
 (** [remaining_players state] is a list of players still in the game in
     [state] *)
 let remaining_players state =
-  List.filter (fun p -> p.in_game = true) state.players
+  List.filter (fun p -> p.in_game) state.players
 
 (** [remaining_players_n state] is the number of remaining players in the
     game in state [state]. *)
 let remaining_players_n state =
   remaining_players state |> List.length
+
+(** [print_hand_result players] displays the hand type of all players in 
+    [players] in a Poker game. *)
+let print_hand_result st =
+  let players = remaining_players st in
+  match players with
+  | [] -> failwith "no players"
+  | [h] -> h.name ^ "'s hand is " ^ string_of_deck h.hand |> print_endline
+  | _ ->
+    for i = 0 to List.length players - 1 do 
+      let player = List.nth players i in 
+      let result = st.flop.hand |> Deck.concat player.hand |> hand_value in 
+      print_endline (player.name ^ " has a " ^ string_of_hand result);
+    done
 
 (** [all_maxed_bets state] is [true] if all remaining players have betted all
     their chips and [false] otherwise. If there are no players in [state],
@@ -399,6 +404,7 @@ let bj_showdown state =
     clone, prints a slightly different message announcing the effect on their
     original. *)
 let pay_player curr win win_msg loss_msg p =
+  if p.bet = 0 && p.money = 0 then () else
   if win then begin
     p.money <- p.bet + p.money;
     if is_copy p then print_clone_result p.name win_msg true p curr else
