@@ -188,7 +188,7 @@ let print_hand_result st =
   let players = st.players |> List.filter (fun x -> x.in_game) in
   for i = 0 to List.length players - 1 do 
     let player = List.nth players i in 
-    let result = player.hand |> hand_value in 
+    let result = st.flop.hand |> Deck.concat player.hand |> hand_value in 
     print_endline (player.name ^ "has a " ^ string_of_hand result);
   done
 
@@ -937,7 +937,7 @@ let p_showdown s =
   let winners = p_winners remaining_players s in
   let total_bet = List.fold_left (fun acc p -> p.bet + acc) 0 s.players in
   let payment = total_bet / (List.length winners) in
-  print_hand_result s;
+  print_hand_result s; print_newline();
   for i = 0 to s.player_num - 1 do
     let player = List.nth s.players i in
     print_hand_showdown player;
