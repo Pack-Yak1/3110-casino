@@ -30,7 +30,11 @@ let blackjack_rules = "Rules\nHit: Take another card from the dealer.\n\
                        Quit the game.\nTools: View or edit settings and \
                        rules."
 let poker_rules = "Rules\nCheck: Decline to bet. You keep your hand but do \
-                   not open.\n\
+                   not open. You can only check if no player has opened or \
+                   raised before you in the round, unless you are the big \
+                   blind in the pre-flop round. You cannot check in the \
+                   pre-flop round unless you are the big blind and everyone \
+                   has called.\n\
                    Call: Match the bet of the previous player.\n\
                    Raise: Bet more than the previous bet. Enter the amount \
                    by which you want to increase your total bet, across all \
@@ -190,7 +194,7 @@ let update_player_stats name money game win f =
 let update_money_only name money =
   update_player_stats name money "" true (update_money_if_match name money)
 
-let update_all_player_stats name money game win =
+let update_player_all_stats name money game win =
   add_new_player_stats name;
   update_player_stats name money game win
     (update_all_if_match name money game win)
@@ -354,5 +358,5 @@ and show_menu game player =
   | View_Rules -> view_rules game player true
   | View_Statistics -> view_stats game player
   | Return -> ()
-  | _ -> print_string player.style "Not an available tool.";
+  | _ -> print_string player.style "Not an available tool.\n";
     show_menu game player

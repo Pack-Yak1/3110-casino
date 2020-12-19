@@ -8,16 +8,19 @@ different gameplay scenarios.
 Main, Gamestate:
 We could not unit test these modules because their exposed functions
 are mainly game engines. Thus, we playtested each game.
-Blackjack game: We playtested to see if each blackjack command is perform 
-correctly. We check to see if hit gives a new card to player, double did double
-bet player placed, and split creates two separate hand and calculate the result 
-for each hand.
-Poker game: Similar with Blackjack, we playtested to see each Poker command is 
-performed appropriately. We also check if blinds is working. 
+Blackjack game: We playtested to see if each blackjack command was performed 
+correctly. We checked to see if hit gave a new card to the player,
+double did double the bet the player placed, and split created two separate
+hand and calculated the result for each hand.
+Poker game: Similar to Blackjack, we playtested to see each that each Poker
+command was performed appropriately. We used glass-box testing to check each
+type of game scenario regarding possible paths of gameplay, such as the first
+person calling, everyone folding, invalid raises, the big blind being able to
+check in pre-flop only, only 1 or 2 players, etc.
 Baccarat game: We playtested to see if it follows the right Baccarat rule, 
 returns the correct winning hand and individual winning status of each player at 
 the end of each round. 
-For general, we playtest to see if the engine prompted to ask player
+In general, we playtest to see if the engine prompted to ask player
 to reenter information if input is invalid, cards are in random order for each 
 game, switching between games at the end of play.
 
@@ -30,9 +33,9 @@ user input. We playtested by testing many inputs, using a glass-box
 approach to reach every possible branch.
 
 Deck, Blackjack, Poker:
-We used OUnit to test these modules. We develop test cases for each funtion in 
-these three modules using glass-box testing. In addition, bisect is used to make
-sure the coverage.  
+We used OUnit to test these modules. We developed test cases for each funtion in 
+these three modules using glass-box testing. In addition, we used bisect to
+check for and increase coverage.  
 
 Baccarat:
 Playtested with Main, Gamestate. Make sure correct drawing rule (banker's rule,

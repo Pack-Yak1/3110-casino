@@ -17,7 +17,7 @@ type t = {
   turn : int;
   mutable players : player list;
   currency : string;
-  small_blind : int;
+  mutable small_blind : int;
   num_decks : int;
   mutable ba_players : player list;
 }
@@ -423,7 +423,7 @@ let bj_payout state win_msg loss_msg player_outcomes =
     let player = List.nth players i in
     let win = List.nth player_outcomes i in
     pay_player state.currency win win_msg loss_msg player.name player;
-    update_all_player_stats player.name
+    update_player_all_stats player.name
       (string_of_int player.money ^ " " ^ state.currency) state.name win
   done; reset_bets state; state
 
@@ -650,7 +650,7 @@ let ba_showdown outcome st =
     let player = List.nth players i in 
     let win = List.nth (List.map (fun x -> x.bet_on = outcome) players) i in 
     pay_player st.currency win "won" "lost" player.name player;
-    update_all_player_stats player.name
+    update_player_all_stats player.name
       (string_of_int player.money ^ " " ^ st.currency) st.name win
   done; reset_bets st; st
 
@@ -681,11 +681,33 @@ let ba_turn s =
 
 (************* Begin poker engine (REPL) & helpers *************)
 
+(** [post_blinds state] is [state] with the small and big blinds posted by the
+    first two players as their first turns. *)
+let post_blinds state =
+  let print_blind_msg name blind amt =
+    name ^ " has posted the " ^ blind ^ " of " ^ string_of_int amt
+    |> print_endline in
+  state.small_blind <- choose_num_geq_1_leq_n blind_seln_msg invalid_blind_msg
+      0 false;
+  match state.players with
+  | [] -> state
+  | [p] -> state
+  | small :: big :: t ->
+    small.bet <- state.small_blind;
+    print_blind_msg small.name "small blind" state.small_blind;
+    big.bet <- state.small_blind * 2;
+    print_blind_msg big.name "big blind" (state.small_blind * 2);
+    state
+
 (** [instant_end state] is true if the game is in a state where the betting
     round of poker should end. *)
-let rec instant_end state = 
+let rec instant_end state =
+  let all_matched = all_bets_matched state in
   if remaining_players_n state <= 1 || all_maxed_bets state then true
-  else all_bets_matched state && state.turn > (state.player_num - 1)
+  (* The big blind can check in the pre-flop round if no one has raised *)
+  else if length state.flop.hand = 0 && state.turn = state.player_num + 1
+  then false
+  else all_matched && state.turn >= state.player_num
 
 (** [take_poker_command state] prompts the user to enter a poker command for 
     their turn in a betting round of Texas Hold'em. Returns a game_state with 
@@ -830,9 +852,16 @@ let p_showdown s =
       player.name ^ " won and has " ^ string_of_int player.money
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
     end;
-    update_all_player_stats player.name
+    update_player_all_stats player.name
       (string_of_int player.money ^ " " ^ s.currency) s.name is_winner_i;
   done; reset_bets s; s
+
+(** [rotate_players_if_poker s] is [s] with the first player rotated to the end. *)
+let rotate_players_if_poker s =
+  if s.name <> "poker" then s else
+    let rotated = match s.players with
+      | [] -> []
+      | h :: t -> t @ [h] in {s with players = rotated}
 
 (** [reenter_all s] puts all the players back into the game after a round
     ends *)
@@ -844,14 +873,15 @@ let p_bet_round s msgs cards =
     if remaining_players_n s < 2 then s
     else begin
       deal_n n s s.flop;
-      let reset_state = {s with turn = 0} in
+      let reset_state =
+        if n = 0 then {s with turn = 2} else {s with turn = 0} in
       print_endline msg;
       take_poker_command reset_state
     end in
   List.fold_left2 helper s msgs cards
 
 let p_game s =
-  p_bet_round s poker_round_msgs card_numbers
+  let s = post_blinds s in p_bet_round s poker_round_msgs card_numbers
 
 (** [poker_game s] initiates the betting rounds of poker, then passes results
     to the showdown *)
@@ -946,7 +976,8 @@ let rec play_round init_bet has_dealer starting_cards turn state =
     update_total_game_stats state.name;
 
     (* Play the game using [turn], the game engine. *)
-    let final_state = turn new_state |> reenter_all in
+    let final_state =
+      turn new_state |> reenter_all |> rotate_players_if_poker in
     remove_copies_stats "";
 
     (* Checks if the game shall run another round. *)

@@ -13,7 +13,7 @@ type t = {
   turn : int;
   mutable players : player list;
   currency : string;
-  small_blind : int;
+  mutable small_blind : int;
   num_decks : int;
   mutable ba_players : player list;
 }

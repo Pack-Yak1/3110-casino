@@ -42,8 +42,8 @@ val remove_copies_stats : string -> unit
     [name] to [money].*)
 val update_money_only : string -> string -> unit
 
-(** [update_all_player_stats name money game win] sets the money to [money] and
+(** [update_player_all_stats name money game win] sets the money to [money] and
     increments the number of plays of the game with name [game] for
     the player with name [name]. Iff [win] is true, the number of wins is
     incremented.*)
-val update_all_player_stats : string -> string -> string -> bool -> unit
+val update_player_all_stats : string -> string -> string -> bool -> unit
