@@ -182,14 +182,13 @@ let print_player_result name msg p curr =
   ^ " " ^ curr ^ " total." |> print_endline
 
 (** [print_hand_result players] displays the hand type of all players in 
-    [players] in a Poker game.
-    Requires: hand for each person in [players] contains exactly 7 cards. *)
+    [players] in a Poker game. *)
 let print_hand_result st =
   let players = st.players |> List.filter (fun x -> x.in_game) in
   for i = 0 to List.length players - 1 do 
     let player = List.nth players i in 
     let result = st.flop.hand |> Deck.concat player.hand |> hand_value in 
-    print_endline (player.name ^ "has a " ^ string_of_hand result);
+    print_endline (player.name ^ " has a " ^ string_of_hand result);
   done
 
 (************* End display (PRINT) functions *************)
