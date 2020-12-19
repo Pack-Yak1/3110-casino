@@ -110,12 +110,16 @@ let card_numbers = [0; 3; 1; 1]
 (************* Begin display (PRINT) functions *************)
 
 (** [print_hand state index] prints the hand of the player with 0-based index
-    [index] in [state]. *)
+    [index] in [state] in second person. *)
 let print_hand state index = 
   let player = List.nth state.players index in
   let prefix = "Your current hand is " in
   player.hand |> string_of_deck |> ( ^ ) prefix |> print_string player.style;
   print_string [] "\n"
+
+(** [print_hand_showdown p] prints the hand of [p] in third person. *)
+let print_hand_showdown (p : Player.t) =
+  p.name ^ "'s hand is " ^ (p.hand |> string_of_deck) |> print_endline
 
 (** [new_player_screen n state] clears the screen before the turn of the [n]th
     player. *)
@@ -125,11 +129,11 @@ let new_player_screen n state =
   if is_copy then print_endline "Play the second hand.\n" else
     let first_preflop =
       state.turn = 2 && length state.flop.hand = 0 && state.name = "poker" in
-    if first_preflop then n |> turn_msg state |> print_endline else begin
-      if state.turn <> 0 then begin print_endline end_turn_msg;
+    if state.turn <> 0 && not first_preflop then
+      begin print_endline end_turn_msg;
         read_line () |> ignore; erase Screen end else ();
-      n |> turn_msg state |> print_endline;
-      print_endline begin_turn_msg; read_line () |> ignore; erase Screen end
+    n |> turn_msg state |> print_endline;
+    print_endline begin_turn_msg; read_line () |> ignore; erase Screen
 
 (** [start_turn first_try state n] prints a helpful message containing
     information about the [n]th player's hand in [state], as well as the flop
@@ -160,10 +164,12 @@ let print_clone_result name msg win p curr =
   let original_name = String.sub name 0 excess_len in
   let earn_or_loss = if win then "earned" else "lost" in
   let abs_amt = if p.money < 0 then ~- (p.money) else p.money in
+  print_hand_showdown p;
   name ^ " " ^ msg ^ " and has " ^ earn_or_loss ^ " " ^ original_name ^ " " 
   ^ string_of_int abs_amt ^ " " ^ curr ^ "." |> print_endline
 
-let print_player_result name msg p curr = 
+(** [print_player_result name msg p curr] prints the result of [p] *)
+let print_player_result name msg p curr =
   name ^ " " ^ msg ^ " and has " ^ string_of_int p.money
   ^ " " ^ curr ^ " total." |> print_endline
 
@@ -368,21 +374,21 @@ let bj_showdown state =
   let scores = List.map (fun p -> bj_score p.hand) state.players in
   List.map (win_check outcome) scores
 
-(** [pay_player curr win win_msg loss_msg p] pays [p] with name [name]
-    if they win, given by [win], or charges them if they do not win, and prints
+(** [pay_player curr win win_msg loss_msg p] pays [p] if they win, given by
+    [win], or charges them if they do not win, and prints
     the result of whether they win/lose (with [win_msg] or [loss_msg],
     respectively) and their remaining money, in [state]. If the player is a 
     clone, prints a slightly different message announcing the effect on their
     original. *)
-let pay_player curr win win_msg loss_msg name p =
+let pay_player curr win win_msg loss_msg p =
   if win then begin
     p.money <- p.bet + p.money;
-    if is_copy p then print_clone_result name win_msg true p curr else
-      print_player_result name win_msg p curr
+    if is_copy p then print_clone_result p.name win_msg true p curr else
+      print_player_result p.name win_msg p curr
   end else begin
     p.money <- p.money - p.bet;
-    if is_copy p then print_clone_result name loss_msg false p curr else
-      print_player_result name loss_msg p curr
+    if is_copy p then print_clone_result p.name loss_msg false p curr else
+      print_player_result p.name loss_msg p curr
   end
 
 (** [reset_bets s] is [s] with the bets of all players set to 0. *)
@@ -464,7 +470,8 @@ let bj_payout state win_msg loss_msg player_outcomes =
   for i = 0 to state.player_num - 1 do
     let player = List.nth players i in
     let win = List.nth player_outcomes i in
-    pay_player state.currency win win_msg loss_msg player.name player;
+    print_hand_showdown player;
+    pay_player state.currency win win_msg loss_msg player;
     update_player_all_stats player.name
       (string_of_int player.money ^ " " ^ state.currency) state.name win
   done; reset_bets state; state
@@ -693,7 +700,7 @@ let ba_showdown outcome st =
   for i = 0 to st.player_num - 1 do 
     let player = List.nth players i in 
     let win = List.nth (List.map (fun x -> x.bet_on = outcome) players) i in 
-    pay_player st.currency win "won" "lost" player.name player;
+    pay_player st.currency win "won" "lost" player;
     update_player_all_stats player.name
       (string_of_int player.money ^ " " ^ st.currency) st.name win
   done; reset_bets st; st
@@ -871,7 +878,7 @@ and p_fold_protocol first_try player state =
   player.in_game <- false;
   let rem = player.money - player.bet in
   player.name ^ " folded and has " ^ string_of_int rem ^ " "
-  ^ state.currency ^ " left.\n" |> print_string player.style;
+  ^ state.currency ^ " left.\n\n" |> print_string player.style;
   take_poker_command true {state with turn = state.turn + 1}
 
 (** [p_winners players s] is a list of winners in remaining [players] at the 
@@ -900,10 +907,10 @@ let p_showdown s =
   let payment = total_bet / (List.length winners) in
   for i = 0 to s.player_num - 1 do
     let player = List.nth s.players i in
+    print_hand_showdown player;
     let is_winner_i = List.mem player winners in
     if not is_winner_i then
-      pay_player s.currency false "did not win, not printed" "lost"
-        player.name player
+      pay_player s.currency false "did not win, not printed" "lost" player
     else begin player.money <- player.money - player.bet + payment;
       player.bet <- 0;
       player.name ^ " won and has " ^ string_of_int player.money
