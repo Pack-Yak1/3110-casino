@@ -649,7 +649,6 @@ let ba_showdown outcome st =
   for i = 0 to st.player_num - 1 do 
     let player = List.nth players i in 
     let win = List.nth (List.map (fun x -> x.bet_on = outcome) players) i in 
-    print_newline();
     pay_player st.currency win "won" "lost" player.name player;
     update_all_player_stats player.name
       (string_of_int player.money ^ " " ^ st.currency) st.name win
