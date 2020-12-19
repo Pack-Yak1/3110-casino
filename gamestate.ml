@@ -114,23 +114,26 @@ let print_hand state index =
   player.hand |> string_of_deck |> ( ^ ) prefix |> print_string player.style;
   print_string [] "\n"
 
-(** [clear_screen n state] clears the screen before the turn of the [n]th
+(** [new_player_screen n state] clears the screen before the turn of the [n]th
     player. *)
-let clear_screen n state =
+let new_player_screen n state =
   let player = List.nth state.players n in
   let is_copy = ends_x copy_suffix player.name in
-  if is_copy then print_endline "Play the second hand.\n" else begin
-    if state.turn <> 0 then begin print_endline end_turn_msg;
-      read_line () |> ignore; erase Screen end else ();
-    n |> turn_msg state |> print_endline;
-    print_endline begin_turn_msg; read_line () |> ignore; erase Screen end
+  if is_copy then print_endline "Play the second hand.\n" else
+    let first_preflop =
+      state.turn = 2 && length state.flop.hand = 0 && state.name = "poker" in
+    if first_preflop then n |> turn_msg state |> print_endline else begin
+      if state.turn <> 0 then begin print_endline end_turn_msg;
+        read_line () |> ignore; erase Screen end else ();
+      n |> turn_msg state |> print_endline;
+      print_endline begin_turn_msg; read_line () |> ignore; erase Screen end
 
 (** [start_turn first_try state n] prints a helpful message containing
     information about the [n]th player's hand in [state], as well as the flop
     cards, if it is a game of Texas Hold'em and there are flop cards on the 
     table. It clears the screen before the turn if [first_try] is true. *)
 let start_turn first_try state n =
-  if first_try then clear_screen n state else
+  if first_try then new_player_screen n state else ();
   if length state.flop.hand > 0 then begin
     let flop_msg = 
       "The community cards are: " ^ (state.flop.hand |> string_of_deck) in
@@ -283,20 +286,40 @@ let assign_single_bet (player : player) st =
     Input.choose_num_geq_1_leq_n msg invalid_bet_msg player.money true in
   { player with bet = bet }
 
-(** [assign_bets_helper lst n acc] is a list of all [n] players in [lst] with 
-    a bet of prompted value assigned to each. *)
-let rec assign_bets_helper lst n acc st =
+(** [assign_bets_helper f lst n acc] is a list of all [n] players in [lst] with 
+    a bet of prompted value assigned to each, according to [f]. *)
+let rec assign_bets_helper f lst n acc st =
   match lst with 
   | [] -> acc
   | p :: t -> 
     if n = 0 then acc else begin
-      assign_bets_helper t (n - 1) (acc @ [assign_single_bet p st]) st
+      assign_bets_helper f t (n - 1) (acc @ [f p st]) st
     end
 
-(** [assign_bets n state] is [state] with a bet (amount prompted) assigned
-    to all [n] players in [state]. *)
+(** [assign_bets n state] is the list of players in [state] with a bet
+    (amount prompted) assigned to all [n] players in [state]. *)
 let assign_bets n state = 
-  assign_bets_helper state.players n [] state
+  assign_bets_helper assign_single_bet state.players n [] state
+
+(** [choose_ba_bet player state] is [player] with prompted Baccarat outcome
+    bet assigned in [state]. *)
+let choose_ba_bet player state =
+  let rec choose_h first_try state =
+    if first_try then new_player_screen (find_index player state.players) state
+    else ();
+    print_endline bet_on_msg;
+    let n = read_line () |> String.trim |> String.lowercase_ascii in
+    match n with
+    | "banker" -> Banker
+    | "player" -> Player 
+    | "tie" -> Tie
+    | _ -> print_endline invalid_bet_on_msg; choose_h false state in
+  let bet = choose_h true state in erase Screen; { player with bet_on = bet }
+
+(** [assign_ba_bets n state] is the list of players in [state] with a Baccarat
+    bet (outcome prompted) assigned to all [n] players in [state]. *)
+let assign_ba_bets n state =
+  assign_bets_helper choose_ba_bet state.players n [] state
 
 (************* End bet setting (EVAL) & helper functions *************)
 
@@ -660,20 +683,6 @@ let ba_result st =
   | _, 9 -> Banker
   | _ -> player_rule p st
 
-(** [choose_ba_bet player state] is the Baccarat outcome that the player wants
-    to bet on in [state]. *)
-let choose_ba_bet player state =
-  let rec choose_h first_try state =
-    if first_try then clear_screen (find_index player state.players) state else
-      print_endline bet_on_msg;
-    let n = read_line () |> String.trim |> String.lowercase_ascii in
-    match n with
-    | "banker" -> Banker
-    | "player" -> Player 
-    | "tie" -> Tie
-    | _ -> print_endline invalid_bet_on_msg; choose_h false state in
-  let bet = choose_h true state in { player with bet_on = bet }
-
 (** [ba_showdown outcome st] pays each player in [st] depending on
     [outcome] in the game. *)
 let ba_showdown outcome st = 
@@ -689,6 +698,7 @@ let ba_showdown outcome st =
 (** Plays a game of baccarat and returns a game_state with the results of the
     game applieed. *)
 let ba_turn first_try s =
+  s.players <- assign_ba_bets s.player_num s;
   let banker = {default_player with name = "banker"} in
   let player =  {default_player with name = "player"} in
   s.ba_players <- [player; banker];
@@ -758,10 +768,10 @@ and take_poker_command first_try state =
         | Raise -> p_raise_protocol first_try p state
         | Call -> p_call_protocol first_try p state
         | Fold -> p_fold_protocol first_try p state
-        | Remind -> p_remind_protocol first_try p state
+        | Remind -> p_remind_protocol p state
         | Quit -> quit_protocol state
         | Tools -> Tools.show_menu state.name p;
-          take_poker_command first_try state
+          take_poker_command false state
       with 
       | Invalid_command -> invalid_protocol take_poker_command state
     end
@@ -837,11 +847,11 @@ and p_call_protocol first_try player state =
     take_poker_command false state
   end
 
-(** [p_remind_protocol first_try player state] prints the current bet of
+(** [p_remind_protocol player state] prints the current bet of
     [player] and prompts for a new command. *)
-and p_remind_protocol first_try player state =
+and p_remind_protocol player state =
   current_bet_msg player state.currency |> print_string player.style;
-  take_poker_command first_try state
+  take_poker_command false state
 
 (** [p_fold_protocol first_try player state] is [state] with [player]
     folding. *)
@@ -910,7 +920,7 @@ let p_bet_round s msgs cards =
       deal_n n s s.flop;
       let reset_state =
         if n = 0 then {s with turn = 2} else {s with turn = 0} in
-      print_endline msg;
+      erase Screen; print_endline msg;
       take_poker_command true reset_state
     end in
   List.fold_left2 helper s msgs cards

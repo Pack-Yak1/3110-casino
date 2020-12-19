@@ -22,7 +22,8 @@ returns the correct winning hand and individual winning status of each player at
 the end of each round. 
 In general, we playtest to see if the engine prompted to ask player
 to reenter information if input is invalid, cards are in random order for each 
-game, switching between games at the end of play.
+game, switching between games at the end of play. Throughout, we
+tried different scenarios to check that the screen was cleared correctly.
 
 Player:
 Playtested with Main, Gamestate.
