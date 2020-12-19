@@ -55,7 +55,10 @@ let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
                           enter either 'banker' or 'player' or 'tie' \n"
 let blind_seln_msg = "Please enter the value of the small blind. The value of \
                       the big blind is twice the value of the small blind."
-let invalid_blind_msg = "The small blind must be positive."
+let invalid_blind_msg max = "The small blind must be positive and less than \
+                             half of the least amount of money held by any \
+                             player still in the game. The maximum allowed is "
+                            ^ string_of_int max ^ ".\n"
 let bet_msg player_name =
   player_name ^  ", please enter how much you wish to bet.\n"
 let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
@@ -723,14 +726,23 @@ let ba_turn first_try s =
 
 (************* Begin poker engine (REPL) & helpers *************)
 
+(** [min_money state] is the minimal amount of money that any non-bankrupt
+    player in [state] has. *)
+let min_money state =
+  let remaining = List.filter (fun p -> p.in_game) state.players in
+  List.fold_left (fun acc x -> if x.money < acc then x.money else acc)
+    default_allowance remaining
+
 (** [post_blinds state] is [state] with the small and big blinds posted by the
     first two players as their first turns. *)
 let post_blinds state =
   let print_blind_msg name blind amt =
     name ^ " has posted the " ^ blind ^ " of " ^ string_of_int amt
     |> print_endline in
-  state.small_blind <- choose_num_geq_1_leq_n blind_seln_msg invalid_blind_msg
-      0 false;
+  let max_blind = min_money state / 2 in
+  state.small_blind <- choose_num_geq_1_leq_n blind_seln_msg
+      (invalid_blind_msg max_blind)
+      max_blind true;
   match state.players with
   | [] -> state
   | [p] -> state
