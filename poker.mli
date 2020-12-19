@@ -32,3 +32,5 @@ val hand_value : Deck.t -> hand
     equal. *)
 val cmp_hand : Deck.t -> Deck.t -> int
 
+(** [string_of_hand hand] is a string of result of Poker. *)
+val string_of_hand : hand -> string

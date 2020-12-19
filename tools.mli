@@ -34,8 +34,16 @@ val view_stats : string -> player -> unit
     with case-insensitive name [name]. *)
 val update_total_game_stats : string -> unit
 
-(** [update_player_stats name money game win] sets the money to [money] and
+(** [remove_copies_stats] removes the copies of players from stats
+    during the game with name [game]. *)
+val remove_copies_stats : string -> unit
+
+(** [update_money_only name money] sets the money of the player with name
+    [name] to [money].*)
+val update_money_only : string -> string -> unit
+
+(** [update_all_player_stats name money game win] sets the money to [money] and
     increments the number of plays of the game with name [game] for
     the player with name [name]. Iff [win] is true, the number of wins is
     incremented.*)
-val update_player_stats : string -> string -> string -> bool -> unit
+val update_all_player_stats : string -> string -> string -> bool -> unit

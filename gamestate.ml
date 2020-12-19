@@ -67,7 +67,7 @@ let invalid_command_msg = "You have entered an invalid command. Please try \
 let invalid_check_msg = "A player has already opened the betting round. You \
                          may no longer check.\n"
 let copy_suffix = "(copy)"
-let not_unique_msg = "You cannot double down or split because you have already\
+let not_unique_msg = "You cannot double down or split because you have already \
                       split this round.\n"
 let non_2_card_split_msg = "You can only split if you have exactly 2 cards.\n"
 let unequal_split_msg = "You can only split if both your cards have the same \
@@ -92,6 +92,8 @@ let poker_round_msgs = [
   "\nTurn round\n";
   "\nRiver round\n";
 ]
+(** Number of flop cards added before the start of each betting round in Texas
+    Hold'em. *)
 let card_numbers = [0; 3; 1; 1]
 
 (************* End prompts & messages *************)
@@ -125,6 +127,20 @@ let display_final_scores state =
   print_endline final_score_header;
   let lst = state.players in
   List.iter (Player.print_score state.currency) lst
+
+(** Requires: [p] is a clone and there exists exactly one [" "] between the 
+    original player's name and [copy_suffix] in [p.name]. *)
+let print_clone_result name msg win p curr = 
+  let excess_len = (String.length name - String.length copy_suffix) - 1 in
+  let original_name = String.sub name 0 excess_len in
+  let earn_or_loss = if win then "earned" else "lost" in
+  let abs_amt = if p.money < 0 then ~- (p.money) else p.money in
+  name ^ " " ^ msg ^ " and has " ^ earn_or_loss ^ " " ^ original_name ^ " " 
+  ^ string_of_int abs_amt ^ " " ^ curr ^ "." |> print_endline
+
+let print_player_result name msg p curr = 
+  name ^ " " ^ msg ^ " and has " ^ string_of_int p.money
+  ^ " " ^ curr ^ " total." |> print_endline
 
 (************* End display (PRINT) functions *************)
 
@@ -166,6 +182,24 @@ let shared_init s init_bet has_dealer starting_cards =
 (************* End state initializer (EVAL) & helpers *************)
 
 (************* Begin query (EVAL) functions *************)
+
+(** [is_copy] player is true if [player.name] ends with [copy_suffix], else
+    it is false. *)
+let is_copy (player : Player.t) =
+  Player.ends_x copy_suffix player.name
+
+(** [has_copy player state] is true if [state.players] contains a copy of
+    [player].  *)
+let has_copy (player : Player.t) state = 
+  let check = player.name ^ " " ^ copy_suffix in
+  List.filter (fun (p : Player.t) -> p.name = check) state.players
+  |> List.length 
+  |> ( <> ) 0
+
+(** [not_unique player state] is true if [player] has a copy or is itself a 
+    copy. *)
+let not_unique player state = 
+  has_copy player state || is_copy player
 
 (** [remaining_players state] is a list of players still in the game in
     [state] *)
@@ -295,16 +329,18 @@ let bj_showdown state =
 (** [pay_player curr win win_msg loss_msg p] pays [p] with name [name]
     if they win, given by [win], or charges them if they do not win, and prints
     the result of whether they win/lose (with [win_msg] or [loss_msg],
-    respectively) and their remaining money, in [state] *)
+    respectively) and their remaining money, in [state]. If the player is a 
+    clone, prints a slightly different message announcing the effect on their
+    original. *)
 let pay_player curr win win_msg loss_msg name p =
   if win then begin
     p.money <- p.bet + p.money;
-    name ^ " " ^ win_msg ^ " and has " ^ string_of_int p.money
-    ^ " " ^ curr ^ " total." |> print_endline;
+    if is_copy p then print_clone_result name win_msg true p curr else
+      print_player_result name win_msg p curr
   end else begin
     p.money <- p.money - p.bet;
-    name ^ " " ^ loss_msg ^ " and has "  ^ string_of_int p.money
-    ^ " " ^ curr ^ " total."|> print_endline;
+    if is_copy p then print_clone_result name loss_msg false p curr else
+      print_player_result name loss_msg p curr
   end
 
 (** [reset_bets s] is [s] with the bets of all players set to 0. *)
@@ -354,7 +390,7 @@ let eliminate_bankrupts state =
 
 (************ Begin shared protocols ************)
 
-(** [quit_protocol] ends the game instantly and prints a goodbye message.
+(** [quit_protocol state] ends the game instantly and prints a goodbye message.
     It is shared by all game modes. *)
 let quit_protocol state = 
   print_endline goodbye_msg;
@@ -365,6 +401,12 @@ let quit_protocol state =
 let invalid_protocol (engine : t -> t) (state : t) : t = 
   print_endline invalid_command_msg;
   engine state 
+
+(** [no_player_protocol state] ends the game and explains that it is due to
+    the lack of remaining players. *)
+let no_player_protocol state = 
+  print_endline no_players_left_msg;
+  quit_protocol state
 
 (************ End shared protocols ************)
 
@@ -381,9 +423,33 @@ let bj_payout state win_msg loss_msg player_outcomes =
     let player = List.nth players i in
     let win = List.nth player_outcomes i in
     pay_player state.currency win win_msg loss_msg player.name player;
-    update_player_stats player.name
+    update_all_player_stats player.name
       (string_of_int player.money ^ " " ^ state.currency) state.name win
   done; reset_bets state; state
+
+(** [recombine_copies state] is state with all copies deleted and their 
+    earnings/losses returned to their originals.
+    Requires: Copies are always exactly after their originals in 
+    [state.players] *)
+let rec recombine_copies state =
+  match state.players with
+  | [] -> state
+  | p :: [] -> state
+  | p1 :: p2 :: t ->
+    if is_copy p2 then begin
+      (* Reduce playercount *)
+      state.player_num <- state.player_num - 1;
+      (* Give original winnings/losses *)
+      let p' = {p1 with money = p1.money + p2.money} in
+      update_money_only p'.name (string_of_int p'.money ^ " " ^ state.currency);
+      let p_lst' = p' :: (recombine_copies {state with players = t}).players in
+      {state with players = p_lst'}
+    end else begin
+      (* Not a clone, process rest of list *)
+      let p_lst' = 
+        p1 :: (recombine_copies {state with players = p2 :: t}).players in
+      {state with players = p_lst'}
+    end
 
 (** Plays the dealer's turn, draws until deck score exceeds 17 *)
 let bj_dealer_turn state = 
@@ -392,8 +458,9 @@ let bj_dealer_turn state =
   done;
   print_string [] "\nDealer's hand is ";
   dealer.hand |> Deck.string_of_deck |> print_endline;
-  bj_showdown state |> bj_payout state
-    "won against the dealer" "lost against the dealer"
+  bj_showdown state 
+  |> bj_payout state "won against the dealer" "lost against the dealer"
+  |> recombine_copies
 
 (** Prompts player to enter a command for their turn in Blackjack. Returns a 
     [game_state] with the results of the blackjack turn applied.*)
@@ -427,8 +494,7 @@ and check_illegal_split player state =
     print_endline not_enough_to_split_msg;
     true
   end else begin
-    let hand = player.hand in
-    match pick hand 0, pick hand 1 with
+    match pick player.hand 0, pick player.hand 1 with
     | Some c1, Some c2 -> begin
         let d1, d2 = make_deck [c1], make_deck [c2] in
         if bj_score d1 <> bj_score d2 
@@ -474,24 +540,6 @@ and insert_after p lst copy =
   match lst with
   | [] -> raise Not_found
   | h :: t -> if h = p then h :: copy :: t else h :: insert_after p t copy
-
-(** [is_copy] player is true if [player.name] ends with [copy_suffix], else
-    it is false. *)
-and is_copy (player : Player.t) =
-  Player.ends_x copy_suffix player.name
-
-(** [has_copy player state] is true if [state.players] contains a copy of
-    [player].  *)
-and has_copy (player : Player.t) state = 
-  let check = player.name ^ " " ^ copy_suffix in
-  List.filter (fun (p : Player.t) -> p.name = check) state.players
-  |> List.length 
-  |> ( <> ) 0
-
-(** [not_unique player state] is true if [player] has a copy or is itself a 
-    copy. *)
-and not_unique player state = 
-  has_copy player state || is_copy player
 
 and bj_hit_protocol player state = 
   deal player state;
@@ -544,12 +592,15 @@ let third st =
   | _ ->  failwith "Wrong number of cards"
 
 let ba_helper st = 
-  print_string [] "The Player's hand is ";
+  print_string [] "Now the Player's hand is ";
   (player_ba st).hand |> Deck.string_of_deck |> print_endline; 
-  print_string [] "The Banker's hand is ";
+  print_string [] "Now the Banker's hand is ";
   (banker_ba st).hand |> Deck.string_of_deck |> print_endline;
+  print_newline();
   let b_score = ba_score (banker_ba st).hand in
   let p_score = ba_score (player_ba st).hand in 
+  print_endline ("Player has score of " ^ string_of_int p_score);
+  print_endline ("Banker has score of " ^ string_of_int b_score);
   if b_score > p_score then Banker
   else if  b_score < p_score then Player 
   else Tie
@@ -598,8 +649,9 @@ let ba_showdown outcome st =
   for i = 0 to st.player_num - 1 do 
     let player = List.nth players i in 
     let win = List.nth (List.map (fun x -> x.bet_on = outcome) players) i in 
+    print_newline();
     pay_player st.currency win "won" "lost" player.name player;
-    update_player_stats player.name
+    update_all_player_stats player.name
       (string_of_int player.money ^ " " ^ st.currency) st.name win
   done; reset_bets st; st
 
@@ -617,11 +669,12 @@ let ba_turn s =
   banker.hand |> Deck.string_of_deck |> print_endline; 
   print_endline "Press anything to continue.\n"; 
   ignore (read_line());
-  let outcome = ba_result s in begin
+  let outcome = ba_result s in 
+  begin
     match outcome with 
-    | Player -> print_endline "Player won"
-    | Banker -> print_endline "Banker won"
-    | Tie -> print_endline "It's a tie"
+    | Player -> print_endline "\nPlayer won.\n"
+    | Banker -> print_endline "\nBanker won.\n"
+    | Tie -> print_endline "\nIt's a tie.\n"
   end;
   ba_showdown outcome s
 
@@ -778,7 +831,7 @@ let p_showdown s =
       player.name ^ " won and has " ^ string_of_int player.money
       ^ " " ^ s.currency ^ " total.\n" |> print_string player.style
     end;
-    update_player_stats player.name
+    update_all_player_stats player.name
       (string_of_int player.money ^ " " ^ s.currency) s.name is_winner_i;
   done; reset_bets s; s
 
@@ -876,53 +929,57 @@ let get_meta state =
 
 (************* Begin game initializer (REPL) functions *************)
 
+
+
 (** [play_round init_bet has_dealer starting_cards state turn] enters a REPL 
     defined by [turn]. Players are prompted to place bets before cards are 
     dealt if [init_bet]. A dealer is assigned to the game if [has_dealer]. The
     number of cards dealt to each player before the game begins is 
     [starting cards]. *)
 let rec play_round init_bet has_dealer starting_cards turn state =
-
   (* Check if there are still any eligible players remaining. *)
-  if state.player_num <= 0 then begin 
-    print_endline no_players_left_msg;
-    quit_protocol state
-  end else
+  if state.player_num <= 0 then no_player_protocol state 
+  else
 
-    (* Resets game turn, all players and community decks, and resets the main
-       deck to its initial size. If the game mode permits betting before
-       cards are dealt, bets are also obtained from StdIn. *)
+    (* Reset gamestate for new game, update playcount stats. *)
     let new_state = refresh_state state init_bet in
-    (* Deal cards to every player, then the dealer if there is one. *)
     deal_all new_state starting_cards has_dealer;
-    (* Update playcount of [state.name] *)
+    update_total_game_stats state.name;
 
-    (* Enter the REPL loop defined by [turn] to play the desired game, then 
-        re-add all players (in case of folding). *)
+    (* Play the game using [turn], the game engine. *)
     let final_state = turn new_state |> reenter_all in
+    remove_copies_stats "";
+
     (* Checks if the game shall run another round. *)
+    replay_protocol starting_cards turn final_state
 
-    Tools.update_total_game_stats state.name;
+(** [replay_protocol starting_cards turn final_state] prompts the player if 
+    they wish to play another round of the same game. If they do, then another
+    game is started with [starting_cards] number of cards dealt to each player
+    and [turn] as the game engine, and returns the appropriate gamestate. If 
+    not, the player can choose to play a different supported game with a 
+    different set of metavariables, or quit and display final scores. *)
+and replay_protocol starting_cards turn final_state = 
+  (* Check if player wants to play another of the same game. *)
+  let replay_wanted = repeat_game_msg final_state.name |> Input.yes_or_no in
+  if replay_wanted then begin
 
-    let replay_wanted = repeat_game_msg state.name |> Input.yes_or_no in
-    if replay_wanted then begin
+    (* Eliminate bankrupt players, begin next round. *)
+    let next_state = eliminate_bankrupts final_state in
+    play_round init_bet has_dealer starting_cards turn next_state
 
-      (* Eliminate bankrupt players, begin next round. *)
-      let next_state = eliminate_bankrupts final_state in
-      play_round init_bet has_dealer starting_cards turn next_state
-      (* Checks if a different game is desired instead. *)
+    (* Checks if a different game is desired instead. *)
+  end else if Input.yes_or_no change_game_msg then begin
 
-    end else if Input.yes_or_no change_game_msg then begin
+    (* Eliminate bankrupt players, prompt for new gamemode, update state. *)
+    let next_state = eliminate_bankrupts final_state in
+    let init, has_deal, start_cards, engine', state' = get_meta next_state in
 
-      (* Eliminate bankrupt players, prompt for new gamemode. *)
-      let next_state = eliminate_bankrupts final_state in
-      (* Prompts for new gamemode and updates metagame info. *)
-      let init, has_deal, start_cards, engine', state' = get_meta next_state in
-      (* Begins round of new gamemode. *)
-      play_round init has_deal start_cards engine' state'
+    (* Begins round of new gamemode. *)
+    play_round init has_deal start_cards engine' state'
 
-      (* Display final results & exit. *)
-    end else display_final_scores final_state 
+    (* Display final results & exit. *)
+  end else display_final_scores final_state 
 
 let game_constructor state =
   (* Prompt user for desired gamemode and obtain required meta info. *)

@@ -202,24 +202,6 @@ let s2 = shuffle (std_deck())
 let s3 = shuffle d4
 let s4 = shuffle d8
 
-let string_of_hand = function
-  | HighCard c -> "HighCard " ^ string_of_deck c
-  | Pair (r, c) -> 
-    "Pair of " ^ string_of_int r ^ " with " ^ string_of_deck c
-  | TwoPairs (r1, r2, c) -> 
-    "2 Pair of " ^ string_of_int r1 ^ ", " ^ string_of_int r2 ^ " with " ^ 
-    string_of_deck c
-  | ThreeOfAKind (r, c) -> "3 of " ^ string_of_int r ^ " with " ^ 
-                           string_of_deck c
-  | Straight c-> "Straight" ^ string_of_deck c
-  | Flush c -> "Flush " ^ string_of_deck c
-  | FullHouse (r1, r2) -> "Full house, 3 of " ^ string_of_int r1 ^ 
-                          " and 2 of " ^ string_of_int r2
-  | FourOfAKind (r, c) -> 
-    "4 kind of " ^ string_of_int r ^ " with " ^ string_of_deck c
-  | StraightFlush c -> "Straight flush " ^ string_of_deck c
-  | RoyalFlush -> "Royal flush"
-
 let p1  = make_card S 14
 let p2  = make_card S 2
 let p3  = make_card S 3

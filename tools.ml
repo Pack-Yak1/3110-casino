@@ -129,12 +129,12 @@ let update_game win g =
     else `Assoc ["Plays", `Int (plays + 1); "Wins", `Int wins]
   | _ -> failwith "not a game"
 
-(** [update_if_match name money game win player] is [player] with money
+(** [update_all_if_match name money game win player] is [player] with money
     set to to [money] and the number of wins and plays accurately incremented,
     in the game with name [game], iff [player] has name [name]. Iff [player]
     has name [name] and [win] is true, the number of wins is incremented.
     Otherwise, return [player]. *)
-let update_if_match name money game win player =
+let update_all_if_match name money game win player =
   let game = String.capitalize_ascii game in
   match player with
   | `Assoc ["Name", n; "Money", m; g1; g2; g3] ->
@@ -152,17 +152,48 @@ let update_if_match name money game win player =
     else player
   | _ -> failwith "not a player"
 
-let update_player_stats name money game win =
-  add_new_player_stats name;
+let remove_copies_stats game =
   let j = Yojson.Basic.from_file "stats.json" in
   let assoc = j |> member "Players" in
   let total = j |> member "Total games played" in
   match assoc with
   | `List lst ->
-    let updated = List.map (update_if_match name money game win) lst in
+    let updated = List.filter
+        (fun p -> p |> member "Name" |> to_string |> ends_x "(copy)" |> not)
+        lst in
     `Assoc ["Players", `List updated; "Total games played", total]
     |> Yojson.Basic.to_file "stats.json"
   | _ -> failwith "wrong json format"
+
+let update_money_if_match name money player =
+  match player with
+  | `Assoc ["Name", n; "Money", m; g1; g2; g3] ->
+    if n |> to_string = name then
+      `Assoc ["Name", n; "Money", `String money; g1; g2; g3]
+    else player
+  | _ -> failwith "not a player"
+
+(** [update_player_stats name money game win f] updates some stats according
+    to [f] of the player with name [name] in the game with name [game],
+    who has money [money] and win status [win]. *)
+let update_player_stats name money game win f =
+  let j = Yojson.Basic.from_file "stats.json" in
+  let assoc = j |> member "Players" in
+  let total = j |> member "Total games played" in
+  match assoc with
+  | `List lst ->
+    let updated = List.map f lst in
+    `Assoc ["Players", `List updated; "Total games played", total]
+    |> Yojson.Basic.to_file "stats.json"
+  | _ -> failwith "wrong json format"
+
+let update_money_only name money =
+  update_player_stats name money "" true (update_money_if_match name money)
+
+let update_all_player_stats name money game win =
+  add_new_player_stats name;
+  update_player_stats name money game win
+    (update_all_if_match name money game win)
 
 (** [update_total_game_stats_h name assoc] adds 1 to the number of plays of
     the game with name [name] in [assoc]. *)
@@ -182,9 +213,8 @@ let update_total_game_stats game =
   let players = j |> member "Players" in
   let total = j |> member "Total games played" in
   let new_total = update_total_game_stats_h game total in
-  let new_j =
-    `Assoc ["Players", players; "Total games played", `Assoc new_total] in
-  Yojson.Basic.to_file "stats.json" new_j
+  `Assoc ["Players", players; "Total games played", `Assoc new_total]
+  |> Yojson.Basic.to_file "stats.json"
 
 let parse_tools_cmd str =
   let cmd = String.trim str |> String.lowercase_ascii in
