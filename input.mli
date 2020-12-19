@@ -12,10 +12,6 @@ val get_gamemode : unit -> string
     greater than [cap] and [exists_limit] is true, it prints [invalid_msg]. *)
 val choose_num_geq_1_leq_n : string -> string -> int -> bool -> int
 
-(** [choose_bet ()] is a Baccarat outcome, banker, player, or tie, the player 
-    wants to bet on. *)
-val choose_bet : unit -> Baccarat.outcome
-
 (** [update_currency ()] prompts for a currency to be used in casino and 
     returns the user's choice. *)
 val update_currency : string -> string

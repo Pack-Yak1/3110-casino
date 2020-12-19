@@ -157,7 +157,7 @@ let update_all_if_match name money game win player =
     else player
   | _ -> failwith "not a player"
 
-let remove_copies_stats game =
+let remove_copies_stats () =
   let j = Yojson.Basic.from_file "stats.json" in
   let assoc = j |> member "Players" in
   let total = j |> member "Total games played" in

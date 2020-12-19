@@ -6,10 +6,6 @@ let game_seln_msg = "Please enter the name of the game you want to play: \
                      Blackjack, Poker, Baccarat.\n"
 let no_such_game_msg = "You entered an invalid game name. Please try again.\n"
 let no_entry_msg = "Please enter a number.\n"
-let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
-                  'banker' or 'player' or 'tie'. \n"
-let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
-                          enter either 'banker' or 'player' or 'tie' \n"
 let currency_msg = "Please enter your unit of currency.\n"
 let yes_or_no_reminder = "Please enter either 'y' or 'n'.\n"
 
@@ -43,15 +39,6 @@ let rec choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit =
     end
   | None -> print_endline no_entry_msg;
     choose_num_geq_1_leq_n initial_prompt invalid_msg cap exists_limit
-
-let rec choose_bet () =
-  print_endline bet_on_msg;
-  let n = read_line () |> String.trim |> String.lowercase_ascii in
-  match n with
-  | "banker" -> Banker
-  | "player" -> Player 
-  | "tie" -> Tie
-  | _ -> print_endline invalid_bet_on_msg; choose_bet ()
 
 let update_currency default =
   print_endline currency_msg;

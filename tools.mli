@@ -34,9 +34,8 @@ val view_stats : string -> player -> unit
     with case-insensitive name [name]. *)
 val update_total_game_stats : string -> unit
 
-(** [remove_copies_stats] removes the copies of players from stats
-    during the game with name [game]. *)
-val remove_copies_stats : string -> unit
+(** [remove_copies_stats] removes the copies of players from stats. *)
+val remove_copies_stats : unit -> unit
 
 (** [update_money_only name money] sets the money of the player with name
     [name] to [money].*)

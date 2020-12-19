@@ -49,6 +49,10 @@ let invalid_p_msg = "You have entered an invalid number of players. Please \
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
                      a number greater than 0.\n"
 let number_of_players_msg = "Please enter the number of players.\n"
+let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
+                  'banker' or 'player' or 'tie'. \n"
+let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
+                          enter either 'banker' or 'player' or 'tie' \n"
 let blind_seln_msg = "Please enter the value of the small blind. The value of \
                       the big blind is twice the value of the small blind."
 let invalid_blind_msg = "The small blind must be positive."
@@ -73,8 +77,8 @@ let non_2_card_split_msg = "You can only split if you have exactly 2 cards.\n"
 let unequal_split_msg = "You can only split if both your cards have the same \
                          value.\n"
 let not_enough_to_split_msg = "You do not have enough money to split.\n"
-let clear_screen_msg = "Enter anything to end your turn.\n"
-let after_clear_msg = "Enter anything to begin your turn.\n"
+let end_turn_msg = "Enter anything to end your turn.\n"
+let begin_turn_msg = "Enter anything to begin your turn.\n"
 (** [turn_msg n] is a string prompt for the [n-th] user to enter their
     command. *)
 let turn_msg (state : t) n = 
@@ -110,11 +114,23 @@ let print_hand state index =
   player.hand |> string_of_deck |> ( ^ ) prefix |> print_string player.style;
   print_string [] "\n"
 
-(** [start_turn state n] prints a helpful message containing information
-    about the [n]th player's hand in [state], as well as the flop cards, if
-    it is a game of Texas Hold'em and there are flop cards on the table. *)
-let start_turn state n =
-  n |> turn_msg state |> print_endline;
+(** [clear_screen n state] clears the screen before the turn of the [n]th
+    player. *)
+let clear_screen n state =
+  let player = List.nth state.players n in
+  let is_copy = ends_x copy_suffix player.name in
+  if is_copy then print_endline "Play the second hand.\n" else begin
+    if state.turn <> 0 then begin print_endline end_turn_msg;
+      read_line () |> ignore; erase Screen end else ();
+    n |> turn_msg state |> print_endline;
+    print_endline begin_turn_msg; read_line () |> ignore; erase Screen end
+
+(** [start_turn first_try state n] prints a helpful message containing
+    information about the [n]th player's hand in [state], as well as the flop
+    cards, if it is a game of Texas Hold'em and there are flop cards on the 
+    table. It clears the screen before the turn if [first_try] is true. *)
+let start_turn first_try state n =
+  if first_try then clear_screen n state else
   if length state.flop.hand > 0 then begin
     let flop_msg = 
       "The community cards are: " ^ (state.flop.hand |> string_of_deck) in
@@ -265,10 +281,7 @@ let assign_single_bet (player : player) st =
   let msg = bet_msg player.name in
   let bet =
     Input.choose_num_geq_1_leq_n msg invalid_bet_msg player.money true in
-  let p = { player with bet = bet } in 
-  if st.name = "baccarat" then 
-    let b = Input.choose_bet () in {p with bet_on = b}
-  else p
+  { player with bet = bet }
 
 (** [assign_bets_helper lst n acc] is a list of all [n] players in [lst] with 
     a bet of prompted value assigned to each. *)
@@ -401,9 +414,9 @@ let quit_protocol state =
 
 (** [invalid_protocol engine state] prompts for another input in the same
     state. *)
-let invalid_protocol (engine : t -> t) (state : t) : t = 
+let invalid_protocol (engine : bool -> t -> t) (state : t) : t = 
   print_endline invalid_command_msg;
-  engine state 
+  engine false state
 
 (** [no_player_protocol state] ends the game and explains that it is due to
     the lack of remaining players. *)
@@ -467,19 +480,19 @@ let bj_dealer_turn state =
 
 (** Prompts player to enter a command for their turn in Blackjack. Returns a 
     [game_state] with the results of the blackjack turn applied.*)
-let rec bj_turn s =
+let rec bj_turn first_try s =
   let active_player_index = s.turn in
   if active_player_index >= s.player_num then bj_dealer_turn s
   else
     let active_player = List.nth s.players active_player_index in
-    start_turn s active_player_index;
+    start_turn first_try s active_player_index;
     try match read_line() |> begin print_endline ""; parse_bj end with
-      | Hit -> bj_hit_protocol active_player s 
-      | Stand -> bj_stand_protocol active_player s 
-      | Double -> bj_double_protocol active_player s
-      | Split -> bj_split_protocol active_player s
+      | Hit -> bj_hit_protocol first_try active_player s 
+      | Stand -> bj_stand_protocol first_try active_player s 
+      | Double -> bj_double_protocol first_try active_player s
+      | Split -> bj_split_protocol first_try active_player s
       | Quit -> quit_protocol s
-      | Tools -> Tools.show_menu s.name active_player; bj_turn s
+      | Tools -> Tools.show_menu s.name active_player; bj_turn false s
     with
     | Invalid_command -> invalid_protocol bj_turn s
 
@@ -507,8 +520,8 @@ and check_illegal_split player state =
     | _ -> failwith "impossible, player must have 2 cards"
   end
 
-and bj_split_protocol player state = 
-  if check_illegal_split player state then bj_turn state 
+and bj_split_protocol first_try player state = 
+  if check_illegal_split player state then bj_turn false state 
   else begin
     (* Split is legal; begin to split and top up original player hand *)
     let d1, d2 = split player.hand in
@@ -525,8 +538,8 @@ and bj_split_protocol player state =
     insert_clone player state copy
   end
 
-(** [insert_clone player state copy] is [bj_turn] called on [state], with 
-    [state.player_num] incremented by one, and [copy] inserted to 
+(** [insert_clone player state copy] is [bj_turn] called on [state],
+    with [state.player_num] incremented by one, and [copy] inserted to 
     [state.players] after the occurance of [player]. 
     Requires: [player] is an element of [state.players] *)
 and insert_clone player state copy = 
@@ -534,7 +547,7 @@ and insert_clone player state copy =
   let player_list = state.players in
   let player_list' = insert_after player player_list copy in
   let state' = {state with players = player_list'} in
-  bj_turn state'
+  bj_turn false state'
 
 (** [insert_after p lst copy] is [copy] inserted to [lst] after the occurance
     of [p] in [lst].
@@ -544,28 +557,28 @@ and insert_after p lst copy =
   | [] -> raise Not_found
   | h :: t -> if h = p then h :: copy :: t else h :: insert_after p t copy
 
-and bj_hit_protocol player state = 
+and bj_hit_protocol first_try player state = 
   deal player state;
-  bj_turn state
+  bj_turn false state
 
-and bj_stand_protocol player state = 
+and bj_stand_protocol first_try player state = 
   print_hand state state.turn;
-  bj_turn { state with turn = state.turn + 1 }
+  bj_turn true { state with turn = state.turn + 1 }
 
-and bj_double_protocol player state =
+and bj_double_protocol first_try player state =
   (* Check that player has not split before. *)
   if not_unique player state then begin
     print_endline not_unique_msg;
-    bj_turn state
+    bj_turn false state
   end
   (* Check player has sufficient money to double. *)
   else if player.bet <= player.money / 2 then begin
     player.bet <- player.bet * 2;
     deal player state;
-    bj_stand_protocol player state
+    bj_stand_protocol first_try player state
   end else begin
     print_endline invalid_double_msg;
-    bj_turn state
+    bj_turn false state
   end
 
 (************* End blackjack engine (REPL) & helpers *************)
@@ -647,6 +660,22 @@ let ba_result st =
   | _, 9 -> Banker
   | _ -> player_rule p st
 
+(** [choose_ba_bet player state] is the Baccarat outcome that the player wants
+    to bet on in [state]. *)
+let choose_ba_bet player state =
+  let rec choose_h first_try state =
+    if first_try then clear_screen (find_index player state.players) state else
+      print_endline bet_on_msg;
+    let n = read_line () |> String.trim |> String.lowercase_ascii in
+    match n with
+    | "banker" -> Banker
+    | "player" -> Player 
+    | "tie" -> Tie
+    | _ -> print_endline invalid_bet_on_msg; choose_h false state in
+  let bet = choose_h true state in { player with bet_on = bet }
+
+(** [ba_showdown outcome st] pays each player in [st] depending on
+    [outcome] in the game. *)
 let ba_showdown outcome st = 
   let players = st.players in 
   for i = 0 to st.player_num - 1 do 
@@ -659,7 +688,7 @@ let ba_showdown outcome st =
 
 (** Plays a game of baccarat and returns a game_state with the results of the
     game applieed. *)
-let ba_turn s =
+let ba_turn first_try s =
   let banker = {default_player with name = "banker"} in
   let player =  {default_player with name = "player"} in
   s.ba_players <- [player; banker];
@@ -670,7 +699,7 @@ let ba_turn s =
   print_string [] "Banker's hand is ";
   banker.hand |> Deck.string_of_deck |> print_endline; 
   print_endline "Press anything to continue.\n"; 
-  ignore (read_line());
+  read_line () |> ignore;
   let outcome = ba_result s in 
   begin
     match outcome with 
@@ -712,26 +741,27 @@ let rec instant_end state =
   then false
   else all_matched && state.turn >= state.player_num
 
-(** [take_poker_command state] prompts the user to enter a poker command for 
-    their turn in a betting round of Texas Hold'em. Returns a game_state with 
-    the results of the betting round applied. *)
-and take_poker_command state = 
+(** [take_poker_command first_try state] prompts the user to enter a poker
+    command for their turn in a betting round of Texas Hold'em. Returns a
+    game_state with the results of the betting round applied. *)
+and take_poker_command first_try state = 
   if instant_end state then state
   else begin 
     let player_index = state.turn mod state.player_num in
     let p = List.nth state.players player_index in
     if p.in_game = false then
-      take_poker_command {state with turn = state.turn + 1}
+      take_poker_command true {state with turn = state.turn + 1}
     else begin 
-      start_turn state player_index;
+      start_turn first_try state player_index;
       try match read_line() |> begin print_endline ""; parse_p end with
-        | Check -> p_check_protocol p state
-        | Raise -> p_raise_protocol p state
-        | Call -> p_call_protocol p state
-        | Fold -> p_fold_protocol p state
-        | Remind -> p_remind_protocol p state
+        | Check -> p_check_protocol first_try p state
+        | Raise -> p_raise_protocol first_try p state
+        | Call -> p_call_protocol first_try p state
+        | Fold -> p_fold_protocol first_try p state
+        | Remind -> p_remind_protocol first_try p state
         | Quit -> quit_protocol state
-        | Tools -> Tools.show_menu state.name p; take_poker_command state
+        | Tools -> Tools.show_menu state.name p;
+          take_poker_command first_try state
       with 
       | Invalid_command -> invalid_protocol take_poker_command state
     end
@@ -759,66 +789,68 @@ and previous_bet_player_h (player, state) =
 and previous_bet_player player state =
   previous_bet_player_h (player, state) |> fst
 
-(** [p_check_protocol player state] is [state] with [player] checking (matching
-    the previous bet) if allowed and [state] with the turn restarted if checking
-    is not allowed *)
-and p_check_protocol player state =
+(** [p_check_protocol first_try player state] is [state] with [player]
+    checking (matching the previous bet) if allowed and [state] with the turn
+    restarted if checking is not allowed *)
+and p_check_protocol first_try player state =
   let check_allowed = all_bets_matched state in
-  if check_allowed then take_poker_command {state with turn = state.turn + 1} 
+  if check_allowed then
+    take_poker_command true {state with turn = state.turn + 1} 
   else begin
     print_endline invalid_check_msg;
-    take_poker_command state
+    take_poker_command false state
   end
 
-(** [p_raise_protocol player state] is [state] with [player] raising
+(** [p_raise_protocol first_try player state] is [state] with [player] raising
     (increasing the previous bet) if allowed and [state] with the turn restarted
     if raising is not allowed *)
-and p_raise_protocol player state = 
+and p_raise_protocol first_try player state = 
   let previous_bet_player = previous_bet_player player state in
   let previous_bet = previous_bet_player.bet in
   if previous_bet >= player.money then begin
     print_string player.style bet_over_money_msg;
-    take_poker_command state;
+    take_poker_command false state;
   end else
     let bet = Input.choose_num_geq_1_leq_n (bet_msg player.name)
         invalid_bet_msg 0 false in
     let can_bet = player.money - previous_bet in
     if bet > can_bet then begin
       bet_over_rem_msg (string_of_int can_bet) |> print_string player.style;
-      p_raise_protocol player state
+      p_raise_protocol false player state
     end else begin
       player.bet <- previous_bet + bet;
       current_bet_msg player state.currency |> print_string player.style;
-      take_poker_command {state with turn = state.turn + 1}
+      take_poker_command true {state with turn = state.turn + 1}
     end
 
-(** [p_call_protocol player state] is [state] with [player] calling and
-    advancing to the next turn if calling is allowed, and [state] prompting
+(** [p_call_protocol first_try player state] is [state] with [player] calling
+    and advancing to the next turn if calling is allowed, and [state] prompting
     for new input if not allowed. *)
-and p_call_protocol player state = 
+and p_call_protocol first_try player state = 
   let previous_player = previous_bet_player player state in
   if previous_player.bet <= player.money then begin 
     player.bet <- previous_player.bet;
     current_bet_msg player state.currency |> print_string player.style;
-    take_poker_command {state with turn = state.turn + 1}
+    take_poker_command true {state with turn = state.turn + 1}
   end else begin 
     print_endline "You do not have enough money to call";
-    take_poker_command state
+    take_poker_command false state
   end
 
-(** [p_remind_protocol player state] prints the current bet of [player]
-    and prompts for a new command. *)
-and p_remind_protocol player state =
+(** [p_remind_protocol first_try player state] prints the current bet of
+    [player] and prompts for a new command. *)
+and p_remind_protocol first_try player state =
   current_bet_msg player state.currency |> print_string player.style;
-  take_poker_command state
+  take_poker_command first_try state
 
-(** [p_fold_protocol] is [state] with [player] folding. *)
-and p_fold_protocol player state =
+(** [p_fold_protocol first_try player state] is [state] with [player]
+    folding. *)
+and p_fold_protocol first_try player state =
   player.in_game <- false;
   let rem = player.money - player.bet in
   player.name ^ " folded and has " ^ string_of_int rem ^ " "
   ^ state.currency ^ " left.\n" |> print_string player.style;
-  take_poker_command {state with turn = state.turn + 1}
+  take_poker_command true {state with turn = state.turn + 1}
 
 (** [p_winners players s] is a list of winners in remaining [players] at the 
     end of a game of poker in [s].
@@ -879,16 +911,16 @@ let p_bet_round s msgs cards =
       let reset_state =
         if n = 0 then {s with turn = 2} else {s with turn = 0} in
       print_endline msg;
-      take_poker_command reset_state
+      take_poker_command true reset_state
     end in
   List.fold_left2 helper s msgs cards
 
 let p_game s =
   let s = post_blinds s in p_bet_round s poker_round_msgs card_numbers
 
-(** [poker_game s] initiates the betting rounds of poker, then passes results
-    to the showdown *)
-let poker_turn s =
+(** [poker_game first_try s] initiates the betting rounds of poker, then
+    passes results to the showdown *)
+let poker_turn first_try s =
   p_game s |> p_showdown
 
 (************* End poker engine (REPL) & helpers *************)
@@ -904,7 +936,7 @@ type game_info = {
   init_bet : bool;
   has_dealer : bool;
   initial_cards : int;
-  engine : t -> t;
+  engine : bool -> t -> t;
 }
 let bj_info = {
   init_bet = Blackjack.init_bet;
@@ -973,15 +1005,14 @@ let rec play_round init_bet has_dealer starting_cards turn state =
   if state.player_num <= 0 then no_player_protocol state 
   else
 
-    (* Reset gamestate for new game, update playcount stats. *)
+    (* Reset gamestate for new game. *)
     let new_state = refresh_state state init_bet in
     deal_all new_state starting_cards has_dealer;
-    update_total_game_stats state.name;
 
-    (* Play the game using [turn], the game engine. *)
+    (* Play the game using [turn], the game engine. Update playcount stats. *)
     let final_state =
       turn new_state |> reenter_all |> rotate_players_if_poker in
-    remove_copies_stats "";
+    remove_copies_stats (); update_total_game_stats state.name;
 
     (* Checks if the game shall run another round. *)
     replay_protocol starting_cards turn final_state
@@ -1009,7 +1040,7 @@ and replay_protocol starting_cards turn final_state =
     let init, has_deal, start_cards, engine', state' = get_meta next_state in
 
     (* Begins round of new gamemode. *)
-    play_round init has_deal start_cards engine' state'
+    play_round init has_deal start_cards (engine' true) state'
 
     (* Display final results & exit. *)
   end else display_final_scores final_state 
@@ -1023,6 +1054,6 @@ let game_constructor state =
   let state'' = shared_init state' init_bet has_dealer start_cards in
 
   (* Begins the match loop *)
-  play_round init has_deal start_cards engine' state''
+  play_round init has_deal start_cards (engine' true) state''
 
 (************* End game initializer (REPL) functions *************)
