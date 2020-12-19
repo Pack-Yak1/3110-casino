@@ -181,10 +181,11 @@ let print_player_result name msg p curr =
   name ^ " " ^ msg ^ " and has " ^ string_of_int p.money
   ^ " " ^ curr ^ " total." |> print_endline
 
-(** [print_result players] displays the hand type of all players in [players] in 
-    a Poker game.
+(** [print_hand_result players] displays the hand type of all players in 
+    [players] in a Poker game.
     Requires: hand for each person in [players] contains exactly 7 cards. *)
-let print_hand_result players =
+let print_hand_result st =
+  let players = st.players |> List.filter (fun x -> x.in_game) in
   for i = 0 to List.length players - 1 do 
     let player = List.nth players i in 
     let result = player.hand |> hand_value in 
@@ -936,6 +937,7 @@ let p_showdown s =
   let winners = p_winners remaining_players s in
   let total_bet = List.fold_left (fun acc p -> p.bet + acc) 0 s.players in
   let payment = total_bet / (List.length winners) in
+  print_hand_result s;
   for i = 0 to s.player_num - 1 do
     let player = List.nth s.players i in
     print_hand_showdown player;
