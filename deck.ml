@@ -16,7 +16,8 @@ let k_rank = 13
 let a_rank = 14
 
 let make_card (s : suit) (r : rank) : card = 
-  if r > highest_rank || r < lowest_rank then raise(InvalidRank r) else (s, r)
+  if r > highest_rank || r < lowest_rank 
+  then raise(InvalidRank r) else (s, r)
 
 let make_deck (lst : card list) : t = 
   lst
@@ -98,7 +99,7 @@ let append (d : t) (c : card) : t =
 
 let remainder (d : t) : t = 
   match d with
-  | [] -> failwith "Deck is empty, there is no remainder."
+  | [] -> failwith "Deck is empty, there is no remainder." 
   | h :: t -> t
 
 let rec return (cards : t) (n : int ) : t = 
@@ -106,7 +107,7 @@ let rec return (cards : t) (n : int ) : t =
   | 0 -> []
   | n -> begin
       match cards with
-      | [] -> failwith "not enough cards to draw"
+      | [] -> failwith "not enough cards to draw" [@coverage off]
       | h :: t -> (n - 1 |> return t |> append) h
     end
 
@@ -114,7 +115,7 @@ let rec return (cards : t) (n : int ) : t =
     which case it is 10, or b) an ace, in which case it raises an exception *)
 let bj_rank ((s, r) : card) = 
   if r < a_rank then r |> min 10
-  else failwith "Cannot rank ace without all aces"
+  else failwith "Cannot rank ace without all aces" [@coverage off]
 
 (** [bj_score_under_21 sum n] is the maximum score of a hand containing
     non-ace cards with a sum of [sum] and [n] aces, counting each ace as
@@ -242,7 +243,7 @@ let shuffle (cards : t) : t =
 let split deck = 
   match deck with
   | h :: [t] -> make_deck [h], make_deck [t]
-  | _ -> failwith "precondition violated"
+  | _ -> failwith "precondition violated" [@coverage off]
 
 let string_of_suit = function
   | S -> "♤"
@@ -256,7 +257,7 @@ let string_of_rank n =
   else if n = q_rank then "Q"
   else if n = k_rank then "K"
   else if n = a_rank then "A"
-  else raise (InvalidRank n)
+  else raise (InvalidRank n) [@coverage off]
 
 let string_of_card ((s, r) : card) = 
   "(" ^ string_of_suit s ^ ", " ^ string_of_rank r ^ ")"
