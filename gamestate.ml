@@ -6,6 +6,7 @@ open Command
 open Tools
 open Baccarat
 open Input
+open Poker
 
 type player = Player.t
 
@@ -179,6 +180,16 @@ let print_clone_result name msg win p curr =
 let print_player_result name msg p curr =
   name ^ " " ^ msg ^ " and has " ^ string_of_int p.money
   ^ " " ^ curr ^ " total." |> print_endline
+
+(** [print_result players] displays the hand type of all players in [players] in 
+    a Poker game.
+    Requires: hand for each person in [players] contains exactly 7 cards. *)
+let print_hand_result players =
+  for i = 0 to List.length players - 1 do 
+    let player = List.nth players i in 
+    let result = player.hand |> hand_value in 
+    print_endline (player.name ^ "has a " ^ string_of_hand result);
+  done
 
 (************* End display (PRINT) functions *************)
 
