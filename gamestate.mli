@@ -9,11 +9,12 @@ type t = {
   name : string;
   mutable game_deck : Deck.t;
   mutable flop : player;
+  mutable small_blind : int;
+  mutable last_raise : int;
   mutable player_num : int;
   turn : int;
   mutable players : player list;
   currency : string;
-  mutable small_blind : int;
   num_decks : int;
   mutable ba_players : player list;
 }

@@ -13,11 +13,12 @@ type t = {
   name : string;
   mutable game_deck : Deck.t;
   mutable flop : player;
+  mutable small_blind : int;
+  mutable last_raise : int;
   mutable player_num : int;
   turn : int;
   mutable players : player list;
   currency : string;
-  mutable small_blind : int;
   num_decks : int;
   mutable ba_players : player list;
 }
@@ -31,11 +32,12 @@ let default_game = {
   name = "";
   game_deck = empty_deck ();
   flop = Player.flop;
+  small_blind = default_blind;
+  last_raise = 0;
   player_num = 0;
   turn = 0;
   players = [];
   currency = default_currency;
-  small_blind = 0;
   num_decks = 0;
   ba_players = [];
 }
@@ -61,11 +63,16 @@ let invalid_blind_msg max = "The small blind must be positive and less than \
                             ^ string_of_int max ^ ".\n"
 let bet_msg player_name =
   player_name ^  ", please enter how much you wish to bet.\n"
+let raise_to_msg player_name =
+  player_name ^ ", Please enter how much you would like to raise to.\n"
 let invalid_bet_msg = "You have entered an invalid bet. Please enter a number \
                        greater than 0 and less than your limit.\n"
-let bet_over_money_msg = "You do not have enough money to raise.\n"
-let bet_over_rem_msg lim = "You do not have enough money to raise by this \
-                            amount. You can bet up to " ^ lim ^ " more.\n"
+let bet_over_money_msg = "You do not have enough money to raise to this \
+                          amount.\n"
+let min_raise_to_msg n = "You must raise to at least " ^ string_of_int n ^ ".\n"
+let bet_over_rem_msg max = "You do not have enough money to raise to this \
+                            amount. You can raise up to "
+                           ^ string_of_int max ^ ".\n"
 let current_bet_msg player curr =
   "You currently have "^ string_of_int player.bet ^ " " ^ curr ^ " bet.\n"
 let invalid_double_msg = "You do not have enough money to double."
@@ -830,26 +837,39 @@ and p_check_protocol first_try player state =
     take_poker_command false state
   end
 
+(** [cannot_afford_any_raise prev_bet player state] is [state] after
+    [player]'s turn, after they tried to raise but could not afford to
+    raise at all. *)
+and cannot_afford_any_raise player state =
+  print_string player.style bet_over_money_msg;
+  take_poker_command false state
+
+(** [cannot_afford_n_raise player state] is [state] after [player]'s turn,
+    after they tried to raise to an amount they could not afford. *)
+and cannot_afford_n_raise player state =
+  bet_over_rem_msg player.money |> print_string player.style;
+  p_raise_protocol false player state
+
 (** [p_raise_protocol first_try player state] is [state] with [player] raising
     (increasing the previous bet) if allowed and [state] with the turn restarted
     if raising is not allowed *)
 and p_raise_protocol first_try player state = 
   let previous_bet_player = previous_bet_player player state in
   let previous_bet = previous_bet_player.bet in
-  if previous_bet >= player.money then begin
-    print_string player.style bet_over_money_msg;
-    take_poker_command false state;
-  end else
-    let bet = Input.choose_num_geq_1_leq_n (bet_msg player.name)
+  min_raise_to_msg (state.last_raise + previous_bet)
+  |> print_string player.style;
+  if previous_bet + state.last_raise >= player.money then
+    cannot_afford_any_raise player state else
+    let raise_to = Input.choose_num_geq_1_leq_n (raise_to_msg player.name)
         invalid_bet_msg 0 false in
-    let can_bet = player.money - previous_bet in
-    if bet > can_bet then begin
-      bet_over_rem_msg (string_of_int can_bet) |> print_string player.style;
+    if raise_to > player.money then
+      cannot_afford_n_raise player state
+    else if raise_to < state.last_raise + previous_bet then
       p_raise_protocol false player state
-    end else begin
-      player.bet <- previous_bet + bet;
+    else begin player.bet <- raise_to;
       current_bet_msg player state.currency |> print_string player.style;
-      take_poker_command true {state with turn = state.turn + 1}
+      take_poker_command true
+        {state with turn = state.turn + 1; last_raise = raise_to - previous_bet}
     end
 
 (** [p_call_protocol first_try player state] is [state] with [player] calling
@@ -862,7 +882,7 @@ and p_call_protocol first_try player state =
     current_bet_msg player state.currency |> print_string player.style;
     take_poker_command true {state with turn = state.turn + 1}
   end else begin 
-    print_endline "You do not have enough money to call";
+    print_endline "You do not have enough money to call.";
     take_poker_command false state
   end
 
@@ -938,7 +958,8 @@ let p_bet_round s msgs cards =
     else begin
       deal_n n s s.flop;
       let reset_state =
-        if n = 0 then {s with turn = 2} else {s with turn = 0} in
+        if n = 0 then {s with turn = 2; last_raise = s.small_blind}
+        else {s with turn = 0; last_raise = 1} in
       erase Screen; print_endline msg;
       take_poker_command true reset_state
     end in
