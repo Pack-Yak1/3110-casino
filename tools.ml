@@ -37,8 +37,9 @@ let poker_rules = "Rules\nCheck: Decline to bet. You keep your hand but do \
                    has called.\n\
                    Call: Match the bet of the previous player.\n\
                    Raise: Bet more than the previous bet. Enter the amount \
-                   by which you want to increase your total bet, across all \
-                   rounds.\n\
+                   that you would like to raise to, across all \
+                   rounds. You must raise by more than the previous bet or \
+                   raise. There is no minimum raise in rounds after pre-flop.\n\
                    Fold: Abandon your bet and your cards, leaving the \
                    round. If you do not have enough money to call, you must \
                    fold.\n\
