@@ -264,6 +264,7 @@ let d16 = make_deck [p5; p8; p9]
 let d17 = make_deck [p26; p42; p1]
 let d18 = make_deck [c7; p48]
 let d19 = make_deck [p10; p11; p12; p13]
+let d20 = make_deck [c8; c5]
 
 (* S3, CJ, SQ, D3, S2, S10, D2 *)
 let l1 = make_deck [p3; p37; p12; p42; p2; p10; p41]
@@ -384,6 +385,7 @@ let deck_tests = "Deck test suite" >::: [
     test_bj_score "aces count as 11 and for total under 21" l22 18;
     test_bj_score "11 aces count as 10x1, 1x11 for total 21" l23 21;
     test_bj_score "12 aces all count as 1" l24 12;
+    test_bj_score "natural blackjack" d20 ~-1;
 
     test_std_deck "test standard deck" (of_deck d9);
 
@@ -494,6 +496,7 @@ let bj_tests = "Blackjack test suite" >::: [
     bj_win_check_test "Dealer 18 19 true" (Match 18) 19 true;
     bj_win_check_test "Dealer 18 21 true" (Match 18) 21 true;
     bj_win_check_test "Dealer 18 22 false" (Match 18) 22 false;
+    bj_win_check_test "Dealer no BJ player BJ" (Match 21) ~-1 true;
   ]
 
 let test_hand_value name deck expected_output  =
