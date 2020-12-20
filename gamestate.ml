@@ -52,10 +52,10 @@ let invalid_p_msg = "You have entered an invalid number of players. Please \
 let invalid_n_msg = "You have entered an invalid number of decks. Please enter \
                      a number greater than 0.\n"
 let number_of_players_msg = "Please enter the number of players.\n"
-let bet_on_msg = "Please enter whom you wish to bet on. You can either enter \
-                  'banker' or 'player' or 'tie'. \n"
+let bet_on_msg = "Please enter whom you wish to bet on. You can enter \
+                  'banker', 'player' or 'tie'. \n"
 let invalid_bet_on_msg = "You have entered an invalid name to bet on. Please \
-                          enter either 'banker' or 'player' or 'tie' \n"
+                          enter 'banker', 'player' or 'tie' \n"
 let blind_seln_msg = "Please enter the value of the small blind. The value of \
                       the big blind is twice the value of the small blind."
 let invalid_blind_msg max = "The small blind must be positive and less than \
@@ -212,12 +212,10 @@ let start_deck state n : t =
 let update_players n p s =
   { s with player_num = n; players = p }
 
-(** [shared_init s init_bet has_dealer starting_cards turn] is a game state 
-    with number of decks, number of players, player names and initial bets 
-    (iff [init_bet] is true) taken from user responses to prompts. The state 
-    initializes a dealer iff [has_dealer] is true, and deals each player 
-    [starting_cards] cards. *)
-let shared_init s init_bet has_dealer starting_cards = 
+(** [shared_init s starting_cards turn] is a game state 
+    with number of decks, number of players and player names from user input.
+    The state deals each player [starting_cards] cards. *)
+let shared_init s starting_cards = 
 
   (* Select number of decks for game *)
   let n = choose_num_geq_1_leq_n number_of_decks_msg invalid_n_msg 0 false in
@@ -1084,7 +1082,7 @@ let rec play_round init_bet has_dealer starting_cards turn state =
     remove_copies_stats (); update_total_game_stats state.name;
 
     (* Checks if the game shall run another round. *)
-    replay_protocol starting_cards turn final_state
+    replay_protocol init_bet starting_cards turn final_state
 
 (** [replay_protocol starting_cards turn final_state] prompts the player if 
     they wish to play another round of the same game. If they do, then another
@@ -1092,7 +1090,7 @@ let rec play_round init_bet has_dealer starting_cards turn state =
     and [turn] as the game engine, and returns the appropriate gamestate. If 
     not, the player can choose to play a different supported game with a 
     different set of metavariables, or quit and display final scores. *)
-and replay_protocol starting_cards turn final_state = 
+and replay_protocol init_bet starting_cards turn final_state = 
   (* Check if player wants to play another of the same game. *)
   let replay_wanted = repeat_game_msg final_state.name |> Input.yes_or_no in
   if replay_wanted then begin
@@ -1120,7 +1118,7 @@ let game_constructor state =
 
   (* Creates a game state with number of decks, number of players, player names 
      and initial bets (if the game mode permits) *)
-  let state'' = shared_init state' init_bet has_dealer start_cards in
+  let state'' = shared_init state' start_cards in
 
   (* Begins the match loop *)
   play_round init has_deal start_cards (engine' true) state''
