@@ -21,3 +21,6 @@ bisect*.coverage
 \#*\#
 .DS_Store
 *.zip
+
+#stats
+*.json
