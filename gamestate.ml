@@ -493,7 +493,7 @@ let bj_payout state win_msg loss_msg player_outcomes =
   for i = 0 to state.player_num - 1 do
     let player = List.nth players i in
     let win = List.nth player_outcomes i in
-    print_hand_showdown player;
+    if is_copy player |> not then print_hand_showdown player else ();
     pay_player state.currency win win_msg loss_msg player;
     update_player_all_stats player.name
       (string_of_int player.money ^ " " ^ state.currency) state.name win
